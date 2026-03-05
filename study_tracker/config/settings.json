@@ -1,0 +1,117 @@
+{
+  "version": "1.0",
+  "review_schedule": {
+    "first_review_hours": 1,
+    "second_review_hours": 24,
+    "third_review_hours": 72,
+    "description": "复习周期（小时）"
+  },
+  "time_intervals": {
+    "fresh_days": 1,
+    "early_days": 3,
+    "normal_days": 7,
+    "warning_days": 14,
+    "critical_days": 30,
+    "description": "复习时间区间配置（天数）"
+  },
+  "color_mapping": {
+    "fresh": {
+      "background": "#FFFFFF",
+      "foreground": "#000000",
+      "description": "0-1天内 - 不需要复习（白色）"
+    },
+    "early": {
+      "background": "#FFFFE0",
+      "foreground": "#000000",
+      "description": "1-3天内 - 需要复习（浅黄）"
+    },
+    "normal": {
+      "background": "#FFA500",
+      "foreground": "#FFFFFF",
+      "description": "3-7天内 - 重点复习（橙色）"
+    },
+    "warning": {
+      "background": "#FF6347",
+      "foreground": "#FFFFFF",
+      "description": "7-14天内 - 警告级（番茄红）"
+    },
+    "critical": {
+      "background": "#DC143C",
+      "foreground": "#FFFFFF",
+      "description": "14-30天内 - 紧急复习（深红）"
+    },
+    "overdue": {
+      "background": "#8B0000",
+      "foreground": "#FFFFFF",
+      "description": "30+天未更新 - 已遗忘（暗红）"
+    }
+  },
+  "directory_color_mapping": {
+    "description": "目录级别的颜色连续映射 - 基于子文件的紧急度权重",
+    "color_scheme": "orange_continuous",
+    "min_color": "#FFFFFF",
+    "max_color": "#FF4500",
+    "fresh": {
+      "background": "#FFFFFF",
+      "foreground": "#000000",
+      "description": "没有紧急文件 - 白色（不需要急着复习）"
+    },
+    "early": {
+      "background": "#FFE4B5",
+      "foreground": "#000000",
+      "description": "有少量紧急文件 - 淡橙色"
+    },
+    "normal": {
+      "background": "#FFD700",
+      "foreground": "#000000",
+      "description": "有中等紧急文件 - 中橙色"
+    },
+    "warning": {
+      "background": "#FF8C00",
+      "foreground": "#FFFFFF",
+      "description": "有较多紧急文件 - 深橙色"
+    },
+    "critical": {
+      "background": "#FF4500",
+      "foreground": "#FFFFFF",
+      "description": "有大量紧急文件 - 超深橙色"
+    }
+  },
+  "font_config": {
+    "family": "Microsoft YaHei, SimHei, Arial, Helvetica, sans-serif",
+    "default_family": "Microsoft YaHei",
+    "fallback_family": "Arial",
+    "description": "全局字体配置"
+  },
+  "ignore_settings": {
+    "ignore_extensions": [
+      ".log",
+      ".tmp",
+      ".cache",
+      ".bak",
+      ".pyc"
+    ],
+    "ignore_directories": [
+      "node_modules",
+      "dist",
+      "build",
+      ".venv",
+      "venv",
+      "__pycache__",
+      ".pytest_cache"
+    ],
+    "description": "文件和目录忽略配置"
+  },
+  "mastery_weights": {
+    "update_count_weight": 0.6,
+    "time_weight": 0.4,
+    "description": "掌握度计算权重"
+  },
+  "advanced_settings": {
+    "forgetting_curve": "PLACEHOLDER_ebbinghaus_curve_not_implemented",
+    "adaptive_schedule": "PLACEHOLDER_adaptive_scheduling_not_implemented",
+    "ml_prediction": "PLACEHOLDER_ml_based_prediction_not_implemented",
+    "description": "高级设置（待实现）"
+  }
+}
+

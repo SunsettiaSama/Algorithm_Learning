@@ -1,0 +1,1079 @@
+{
+  "version": "1.0",
+  "created_at": "2026-03-03T11:54:28.704865",
+  "last_updated": "2026-03-05T12:09:20.407373",
+  "files": {
+    "README.md": {
+      "path": "README.md",
+      "created_at": "2026-03-01T12:08:14.533047",
+      "last_modified": "2026-03-01T12:08:14.533047",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 1240,
+      "status": "已删除",
+      "notes": "",
+      "last_modified_timestamp": 1772338094.5330467
+    },
+    "study_tracker/main.py": {
+      "path": "study_tracker/main.py",
+      "created_at": "2026-03-03T11:48:10.549502",
+      "last_modified": "2026-03-03T11:48:10.549502",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 0,
+      "update_timestamps": [
+        1772510071
+      ],
+      "file_size": 2471,
+      "status": "已删除",
+      "notes": ""
+    },
+    "study_tracker/run_study_tracker.py": {
+      "path": "study_tracker/run_study_tracker.py",
+      "created_at": "2026-03-03T11:28:47.345271",
+      "last_modified": "2026-03-03T11:28:47.345271",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 0,
+      "update_timestamps": [
+        1772510071
+      ],
+      "file_size": 324,
+      "status": "已删除",
+      "notes": ""
+    },
+    "study_tracker/__init__.py": {
+      "path": "study_tracker/__init__.py",
+      "created_at": "2026-03-03T11:27:40.231941",
+      "last_modified": "2026-03-03T11:27:40.231941",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 0,
+      "update_timestamps": [
+        1772510071
+      ],
+      "file_size": 39,
+      "status": "已删除",
+      "notes": ""
+    },
+    "图论/node.py": {
+      "path": "图论/node.py",
+      "created_at": "2025-11-13T11:34:58",
+      "last_modified": "2025-11-13T11:34:58",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 166,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1763004898.0
+    },
+    "study_tracker/docs/API.md": {
+      "path": "study_tracker/docs/API.md",
+      "created_at": "2026-03-03T11:18:58.114856",
+      "last_modified": "2026-03-03T11:18:58.114856",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 0,
+      "update_timestamps": [
+        1772510071
+      ],
+      "file_size": 9881,
+      "status": "已删除",
+      "notes": ""
+    },
+    "study_tracker/docs/FEATURES.md": {
+      "path": "study_tracker/docs/FEATURES.md",
+      "created_at": "2026-03-03T11:45:06.930142",
+      "last_modified": "2026-03-03T11:45:06.930142",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 0,
+      "update_timestamps": [
+        1772510071
+      ],
+      "file_size": 14714,
+      "status": "已删除",
+      "notes": ""
+    },
+    "study_tracker/docs/QUICK_START.md": {
+      "path": "study_tracker/docs/QUICK_START.md",
+      "created_at": "2026-03-03T11:44:26.967093",
+      "last_modified": "2026-03-03T11:44:26.967093",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 0,
+      "update_timestamps": [
+        1772510071
+      ],
+      "file_size": 5544,
+      "status": "已删除",
+      "notes": ""
+    },
+    "study_tracker/docs/README.md": {
+      "path": "study_tracker/docs/README.md",
+      "created_at": "2026-03-03T11:44:08.460323",
+      "last_modified": "2026-03-03T11:44:08.460323",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 0,
+      "update_timestamps": [
+        1772510071
+      ],
+      "file_size": 3987,
+      "status": "已删除",
+      "notes": ""
+    },
+    "study_tracker/tracker/file_tracker.py": {
+      "path": "study_tracker/tracker/file_tracker.py",
+      "created_at": "2026-03-03T11:39:16.467499",
+      "last_modified": "2026-03-03T11:39:16.467499",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 0,
+      "update_timestamps": [
+        1772510071
+      ],
+      "file_size": 14400,
+      "status": "已删除",
+      "notes": ""
+    },
+    "study_tracker/tracker/__init__.py": {
+      "path": "study_tracker/tracker/__init__.py",
+      "created_at": "2026-03-03T11:16:15.049172",
+      "last_modified": "2026-03-03T11:16:15.049172",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 0,
+      "update_timestamps": [
+        1772510071
+      ],
+      "file_size": 123,
+      "status": "已删除",
+      "notes": ""
+    },
+    "study_tracker/ui/cli.py": {
+      "path": "study_tracker/ui/cli.py",
+      "created_at": "2026-03-03T11:33:37.486727",
+      "last_modified": "2026-03-03T11:33:37.486727",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 0,
+      "update_timestamps": [
+        1772510071
+      ],
+      "file_size": 7686,
+      "status": "已删除",
+      "notes": ""
+    },
+    "study_tracker/ui/gui.py": {
+      "path": "study_tracker/ui/gui.py",
+      "created_at": "2026-03-03T11:52:35.063300",
+      "last_modified": "2026-03-03T11:52:35.063300",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 0,
+      "update_timestamps": [
+        1772510071
+      ],
+      "file_size": 17949,
+      "status": "已删除",
+      "notes": ""
+    },
+    "study_tracker/ui/study_log_window.py": {
+      "path": "study_tracker/ui/study_log_window.py",
+      "created_at": "2026-03-03T11:47:20.068579",
+      "last_modified": "2026-03-03T11:47:20.068579",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 0,
+      "update_timestamps": [
+        1772510071
+      ],
+      "file_size": 9010,
+      "status": "已删除",
+      "notes": ""
+    },
+    "study_tracker/ui/__init__.py": {
+      "path": "study_tracker/ui/__init__.py",
+      "created_at": "2026-03-03T11:16:15.942505",
+      "last_modified": "2026-03-03T11:16:15.942505",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 0,
+      "update_timestamps": [
+        1772510071
+      ],
+      "file_size": 175,
+      "status": "已删除",
+      "notes": ""
+    },
+    "图论/广搜/133clone.py": {
+      "path": "图论/广搜/133clone.py",
+      "created_at": "2025-11-13T12:01:36",
+      "last_modified": "2025-11-13T12:01:36",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 1310,
+      "status": "已删除",
+      "notes": "",
+      "last_modified_timestamp": 1763006496.0
+    },
+    "图论/深搜/133cloneGraph.py": {
+      "path": "图论/深搜/133cloneGraph.py",
+      "created_at": "2025-11-08T14:11:10",
+      "last_modified": "2025-11-08T14:11:10",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 521,
+      "status": "已删除",
+      "notes": "",
+      "last_modified_timestamp": 1762582270.0
+    },
+    "图论/深搜/200island.py": {
+      "path": "图论/深搜/200island.py",
+      "created_at": "2025-11-13T11:25:28",
+      "last_modified": "2025-11-13T11:25:28",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 2015,
+      "status": "已删除",
+      "notes": "",
+      "last_modified_timestamp": 1763004328.0
+    },
+    "图论/深搜/494目标和.py": {
+      "path": "图论/深搜/494目标和.py",
+      "created_at": "2025-11-13T14:27:00",
+      "last_modified": "2025-11-13T14:27:00",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 2583,
+      "status": "已删除",
+      "notes": "",
+      "last_modified_timestamp": 1763015220.0
+    },
+    "图论/深搜/841钥匙和房间.py": {
+      "path": "图论/深搜/841钥匙和房间.py",
+      "created_at": "2025-11-13T14:46:52",
+      "last_modified": "2025-11-13T14:46:52",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 1316,
+      "status": "已删除",
+      "notes": "",
+      "last_modified_timestamp": 1763016412.0
+    },
+    "基础算法/分治算法/169多数元素.py": {
+      "path": "基础算法/分治算法/169多数元素.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 1915,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/分治算法/69求平方根.py": {
+      "path": "基础算法/分治算法/69求平方根.py",
+      "created_at": "2025-11-24T13:49:48",
+      "last_modified": "2025-11-24T13:49:48",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 504,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1763963388.0
+    },
+    "基础算法/分治算法/Pow.py": {
+      "path": "基础算法/分治算法/Pow.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 2201,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/分治算法/README.md": {
+      "path": "基础算法/分治算法/README.md",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 2925,
+      "status": "已删除",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/分治算法/二分查找.py": {
+      "path": "基础算法/分治算法/二分查找.py",
+      "created_at": "2025-11-08T15:11:40",
+      "last_modified": "2025-11-08T15:11:40",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 411,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762585900.0
+    },
+    "基础算法/分治算法/归并排序.py": {
+      "path": "基础算法/分治算法/归并排序.py",
+      "created_at": "2025-11-08T15:21:34",
+      "last_modified": "2025-11-08T15:21:34",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 1409,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762586494.0
+    },
+    "基础算法/分治算法/排序链表.py": {
+      "path": "基础算法/分治算法/排序链表.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 740,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/回溯算法/N皇后.py": {
+      "path": "基础算法/回溯算法/N皇后.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 2185,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/回溯算法/全排列-不重复.py": {
+      "path": "基础算法/回溯算法/全排列-不重复.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 1387,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/回溯算法/全排列.py": {
+      "path": "基础算法/回溯算法/全排列.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 932,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/回溯算法/子集.py": {
+      "path": "基础算法/回溯算法/子集.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 707,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/回溯算法/括号生成.py": {
+      "path": "基础算法/回溯算法/括号生成.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 1596,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/枚举算法/1925-统计平方和三元组的数目.md": {
+      "path": "基础算法/枚举算法/1925-统计平方和三元组的数目.md",
+      "created_at": "2026-03-02T11:40:23.826424",
+      "last_modified": "2026-03-02T11:40:23.826424",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 5989,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772422823.8264236
+    },
+    "基础算法/枚举算法/1925-统计平方和三元组的数目.py": {
+      "path": "基础算法/枚举算法/1925-统计平方和三元组的数目.py",
+      "created_at": "2026-03-02T12:05:29.703025",
+      "last_modified": "2026-03-02T12:05:29.703025",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 3103,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772424329.7030253
+    },
+    "基础算法/枚举算法/204-计数质数.md": {
+      "path": "基础算法/枚举算法/204-计数质数.md",
+      "created_at": "2026-03-02T10:59:24.011451",
+      "last_modified": "2026-03-02T10:59:24.011451",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 6313,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772420364.0114515
+    },
+    "基础算法/枚举算法/204-计数质数.py": {
+      "path": "基础算法/枚举算法/204-计数质数.py",
+      "created_at": "2026-03-02T11:13:55.633851",
+      "last_modified": "2026-03-02T11:13:55.633851",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 1837,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772421235.6338513
+    },
+    "基础算法/枚举算法/28-找出字符串中第一个匹配项的下标.py": {
+      "path": "基础算法/枚举算法/28-找出字符串中第一个匹配项的下标.py",
+      "created_at": "2026-03-01T12:02:06.821338",
+      "last_modified": "2026-03-01T12:02:06.821338",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 499,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772337726.8213384
+    },
+    "基础算法/枚举算法/LCR-007-三数之和.py": {
+      "path": "基础算法/枚举算法/LCR-007-三数之和.py",
+      "created_at": "2026-03-01T12:27:07.530059",
+      "last_modified": "2026-03-01T12:27:07.530059",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 3213,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772339227.5300589
+    },
+    "基础算法/枚举算法/README.md": {
+      "path": "基础算法/枚举算法/README.md",
+      "created_at": "2026-03-01T12:13:15.421418",
+      "last_modified": "2026-03-01T12:13:15.421418",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 643,
+      "status": "已删除",
+      "notes": "",
+      "last_modified_timestamp": 1772338395.4214182
+    },
+    "基础算法/枚举算法/两数之和.py": {
+      "path": "基础算法/枚举算法/两数之和.py",
+      "created_at": "2026-03-01T11:43:09.060156",
+      "last_modified": "2026-03-01T11:43:09.060156",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 439,
+      "status": "已删除",
+      "notes": "",
+      "last_modified_timestamp": 1772336589.0601563
+    },
+    "基础算法/枚举算法/公因数统计.py": {
+      "path": "基础算法/枚举算法/公因数统计.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 358,
+      "status": "已删除",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/枚举算法/百元百鸡.py": {
+      "path": "基础算法/枚举算法/百元百鸡.py",
+      "created_at": "2026-03-01T11:35:54.098809",
+      "last_modified": "2026-03-05T09:48:46.342328",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 2,
+      "update_timestamps": [
+        1772510071,
+        1772510075,
+        1772683760
+      ],
+      "file_size": 1333,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772675326.3423278
+    },
+    "基础算法/枚举算法/统计和三元数.py": {
+      "path": "基础算法/枚举算法/统计和三元数.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 416,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/贪心算法/3250逆序对记数的最小阈值（未完成）.py": {
+      "path": "基础算法/贪心算法/3250逆序对记数的最小阈值（未完成）.py",
+      "created_at": "2025-11-08T16:06:32",
+      "last_modified": "2025-11-08T16:06:32",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 166,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762589192.0
+    },
+    "基础算法/贪心算法/435无重叠区间.py": {
+      "path": "基础算法/贪心算法/435无重叠区间.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 547,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/贪心算法/455分发饼干.py": {
+      "path": "基础算法/贪心算法/455分发饼干.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 1877,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/递归算法/1006-笨阶乘.py": {
+      "path": "基础算法/递归算法/1006-笨阶乘.py",
+      "created_at": "2026-03-03T11:08:10.095879",
+      "last_modified": "2026-03-03T11:08:10.095879",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 1119,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772507290.0958788
+    },
+    "基础算法/递归算法/两数之和.py": {
+      "path": "基础算法/递归算法/两数之和.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 600,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "基础算法/递归算法/阶乘.py": {
+      "path": "基础算法/递归算法/阶乘.py",
+      "created_at": "2026-03-03T11:01:08.680309",
+      "last_modified": "2026-03-03T11:01:08.680309",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 187,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772506868.6803088
+    },
+    "基础算法/递归算法/阶乘、前n项和、斐波那契数列.py": {
+      "path": "基础算法/递归算法/阶乘、前n项和、斐波那契数列.py",
+      "created_at": "2025-11-05T19:37:14",
+      "last_modified": "2025-11-05T19:37:14",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 1954,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1762342634.0
+    },
+    "数组/双指针/18-四数之和.py": {
+      "path": "数组/双指针/18-四数之和.py",
+      "created_at": "2026-03-01T15:01:47.679442",
+      "last_modified": "2026-03-01T15:01:47.679442",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 1423,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772348507.679442
+    },
+    "数组/双指针/INDEX.md": {
+      "path": "数组/双指针/INDEX.md",
+      "created_at": "2026-03-01T14:33:26.650683",
+      "last_modified": "2026-03-01T14:33:26.650683",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 3016,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772346806.6506834
+    },
+    "数组/双指针/LCR-007-三数之和.py": {
+      "path": "数组/双指针/LCR-007-三数之和.py",
+      "created_at": "2026-03-01T14:58:43.307265",
+      "last_modified": "2026-03-01T14:58:43.307265",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 1323,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772348323.3072646
+    },
+    "数组/双指针/README.md": {
+      "path": "数组/双指针/README.md",
+      "created_at": "2026-03-01T14:27:29.445504",
+      "last_modified": "2026-03-01T14:27:29.445504",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 0,
+      "status": "已删除",
+      "notes": "",
+      "last_modified_timestamp": 1772346449.4455044
+    },
+    "数组/双指针/对撞指针/1-两数之和-改良.py": {
+      "path": "数组/双指针/对撞指针/1-两数之和-改良.py",
+      "created_at": "2026-03-02T14:20:18.981151",
+      "last_modified": "2026-03-02T14:20:18.981151",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 762,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772432418.981151
+    },
+    "数组/双指针/对撞指针/125-回文串.md": {
+      "path": "数组/双指针/对撞指针/125-回文串.md",
+      "created_at": "2026-03-02T14:53:27.288146",
+      "last_modified": "2026-03-02T14:53:27.288146",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 13816,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772434407.2881458
+    },
+    "数组/双指针/对撞指针/125-回文串.py": {
+      "path": "数组/双指针/对撞指针/125-回文串.py",
+      "created_at": "2026-03-03T09:39:55.731602",
+      "last_modified": "2026-03-03T09:39:55.731602",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 8673,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772501995.731602
+    },
+    "数组/双指针/对撞指针/344-反转字符串例.py": {
+      "path": "数组/双指针/对撞指针/344-反转字符串例.py",
+      "created_at": "2026-03-03T09:22:32.644006",
+      "last_modified": "2026-03-03T09:22:32.644006",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 1,
+      "update_timestamps": [
+        1772510071,
+        1772510075
+      ],
+      "file_size": 436,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772500952.6440065
+    },
+    "数组/双指针/快慢指针/141-环形链表例题.py": {
+      "path": "数组/双指针/快慢指针/141-环形链表例题.py",
+      "created_at": "2026-03-03T09:56:16.798074",
+      "last_modified": "2026-03-04T10:17:02.144096",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 2,
+      "update_timestamps": [
+        1772510071,
+        1772510075,
+        1772596614
+      ],
+      "file_size": 1640,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772590622.1440957
+    },
+    "数组/双指针/快慢指针/26-删除有序数组中的重复项.py": {
+      "path": "数组/双指针/快慢指针/26-删除有序数组中的重复项.py",
+      "created_at": "2026-03-03T10:56:18.023012",
+      "last_modified": "2026-03-04T10:24:42.371598",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 2,
+      "update_timestamps": [
+        1772510071,
+        1772510075,
+        1772596614
+      ],
+      "file_size": 3132,
+      "status": "已学习",
+      "notes": "",
+      "last_modified_timestamp": 1772591082.3715975
+    },
+    "数组/双指针/快慢指针/876-链表的中间结点.py": {
+      "path": "数组/双指针/快慢指针/876-链表的中间结点.py",
+      "created_at": "2026-03-03T10:24:47.804931",
+      "last_modified": "2026-03-04T10:37:42.377688",
+      "first_seen_timestamp": 1772510071,
+      "update_count": 2,
+      "update_timestamps": [
+        1772510071,
+        1772510075,
+        1772596614
+      ],
+      "file_size": 3396,
+      "status": "新建",
+      "notes": "",
+      "last_modified_timestamp": 1772591862.3776877
+    },
+    "图论/深度优先搜索/133cloneGraph.py": {
+      "path": "图论/深度优先搜索/133cloneGraph.py",
+      "created_at": "2026-02-25T17:20:33.982353",
+      "created_timestamp": 1772011233,
+      "last_modified": "2025-11-08T14:11:10",
+      "last_modified_timestamp": 1762582270.0,
+      "first_seen_timestamp": 1772596614,
+      "update_count": 0,
+      "update_timestamps": [
+        1772596614
+      ],
+      "file_size": 521,
+      "status": "已删除",
+      "notes": ""
+    },
+    "图论/深度优先搜索/200岛屿数量.py": {
+      "path": "图论/深度优先搜索/200岛屿数量.py",
+      "created_at": "2026-02-25T17:20:33.980350",
+      "created_timestamp": 1772011233,
+      "last_modified": "2026-03-05T10:06:54.724371",
+      "last_modified_timestamp": 1772676414.7243707,
+      "first_seen_timestamp": 1772596614,
+      "update_count": 1,
+      "update_timestamps": [
+        1772596614,
+        1772683760
+      ],
+      "file_size": 5869,
+      "status": "新建",
+      "notes": ""
+    },
+    "图论/深度优先搜索/494目标和.py": {
+      "path": "图论/深度优先搜索/494目标和.py",
+      "created_at": "2026-02-25T17:20:33.985351",
+      "created_timestamp": 1772011233,
+      "last_modified": "2025-11-13T14:27:00",
+      "last_modified_timestamp": 1763015220.0,
+      "first_seen_timestamp": 1772596614,
+      "update_count": 0,
+      "update_timestamps": [
+        1772596614
+      ],
+      "file_size": 2583,
+      "status": "新建",
+      "notes": ""
+    },
+    "图论/深度优先搜索/841钥匙和房间.py": {
+      "path": "图论/深度优先搜索/841钥匙和房间.py",
+      "created_at": "2026-02-25T17:20:33.987351",
+      "created_timestamp": 1772011233,
+      "last_modified": "2025-11-13T14:46:52",
+      "last_modified_timestamp": 1763016412.0,
+      "first_seen_timestamp": 1772596614,
+      "update_count": 0,
+      "update_timestamps": [
+        1772596614
+      ],
+      "file_size": 1316,
+      "status": "新建",
+      "notes": ""
+    },
+    "数组/双指针/快慢指针/142-环形链表II.py": {
+      "path": "数组/双指针/快慢指针/142-环形链表II.py",
+      "created_at": "2026-03-04T10:40:44.903049",
+      "created_timestamp": 1772592044,
+      "last_modified": "2026-03-04T11:06:21.300151",
+      "last_modified_timestamp": 1772593581.3001506,
+      "first_seen_timestamp": 1772596614,
+      "update_count": 0,
+      "update_timestamps": [
+        1772596614
+      ],
+      "file_size": 2066,
+      "status": "新建",
+      "notes": ""
+    },
+    "图论/广搜/133克隆图例.py": {
+      "path": "图论/广搜/133克隆图例.py",
+      "created_at": "2026-02-25T17:20:33.975027",
+      "created_timestamp": 1772011233,
+      "last_modified": "2026-03-05T11:05:52.416322",
+      "last_modified_timestamp": 1772679952.4163222,
+      "first_seen_timestamp": 1772683760,
+      "update_count": 0,
+      "update_timestamps": [
+        1772683760
+      ],
+      "file_size": 2327,
+      "status": "新建",
+      "notes": ""
+    },
+    "图论/广搜/695-岛屿最大面积.py": {
+      "path": "图论/广搜/695-岛屿最大面积.py",
+      "created_at": "2026-03-05T10:58:12.260303",
+      "created_timestamp": 1772679492,
+      "last_modified": "2026-03-05T11:42:10.479645",
+      "last_modified_timestamp": 1772682130.4796448,
+      "first_seen_timestamp": 1772683760,
+      "update_count": 0,
+      "update_timestamps": [
+        1772683760
+      ],
+      "file_size": 2976,
+      "status": "新建",
+      "notes": ""
+    },
+    "图论/深度优先搜索/133克隆图.py": {
+      "path": "图论/深度优先搜索/133克隆图.py",
+      "created_at": "2026-02-25T17:20:33.982353",
+      "created_timestamp": 1772011233,
+      "last_modified": "2026-03-05T10:25:20.241046",
+      "last_modified_timestamp": 1772677520.2410464,
+      "first_seen_timestamp": 1772683760,
+      "update_count": 0,
+      "update_timestamps": [
+        1772683760
+      ],
+      "file_size": 943,
+      "status": "新建",
+      "notes": ""
+    },
+    "基础算法/枚举算法/1-两数之和.py": {
+      "path": "基础算法/枚举算法/1-两数之和.py",
+      "created_at": "2026-02-25T17:20:33.943001",
+      "created_timestamp": 1772011233,
+      "last_modified": "2026-03-05T09:52:54.791351",
+      "last_modified_timestamp": 1772675574.7913506,
+      "first_seen_timestamp": 1772683760,
+      "update_count": 0,
+      "update_timestamps": [
+        1772683760
+      ],
+      "file_size": 857,
+      "status": "新建",
+      "notes": ""
+    },
+    "基础算法/枚举算法/2427-公因数统计.py": {
+      "path": "基础算法/枚举算法/2427-公因数统计.py",
+      "created_at": "2026-02-25T17:20:33.945001",
+      "created_timestamp": 1772011233,
+      "last_modified": "2026-03-05T11:48:39.445539",
+      "last_modified_timestamp": 1772682519.4455388,
+      "first_seen_timestamp": 1772683760,
+      "update_count": 0,
+      "update_timestamps": [
+        1772683760
+      ],
+      "file_size": 778,
+      "status": "新建",
+      "notes": ""
+    },
+    "基础算法/枚举算法/LCR-180-文件组合.py": {
+      "path": "基础算法/枚举算法/LCR-180-文件组合.py",
+      "created_at": "2026-03-05T11:49:39.645456",
+      "created_timestamp": 1772682579,
+      "last_modified": "2026-03-05T12:07:54.202484",
+      "last_modified_timestamp": 1772683674.2024837,
+      "first_seen_timestamp": 1772683760,
+      "update_count": 0,
+      "update_timestamps": [
+        1772683760
+      ],
+      "file_size": 863,
+      "status": "新建",
+      "notes": ""
+    }
+  },
+  "study_logs": [
+    {
+      "date": "2026-03-03",
+      "content": "这是一条测试",
+      "timestamp": 1772510220
+    },
+    {
+      "date": "2026-03-03",
+      "content": "数组中双指针\n对撞指针和快慢指针，记得复习",
+      "timestamp": 1772517723
+    }
+  ],
+  "ignored_dirs": []
+}

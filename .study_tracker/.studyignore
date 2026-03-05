@@ -1,0 +1,21 @@
+# .studyignore - 指定要忽略的文件和目录
+# 语法类似于 .gitignore
+
+# 不追踪某些目录
+node_modules/
+dist/
+build/
+.venv/
+venv/
+
+# 不追踪某些文件类型
+*.log
+*.tmp
+*.cache
+*.bak
+
+# 不追踪隐藏文件夹中的内容（已默认忽略）
+
+study_tracker
+根目录
+README.md

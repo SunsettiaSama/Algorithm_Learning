@@ -1,0 +1,49 @@
+# 三数之和的关键在于
+# 在枚举算法的基础上，需要加入双指针来完成遍历，以降低时间复杂度
+
+from typing import List
+
+class Solution:
+    def threeSum(self, nums: List[int]) -> List[List[int]]:
+
+        res = []
+        n = len(nums)
+
+        # 不可能的情况
+        if n < 3:
+            return res
+        
+        nums.sort()
+
+        for i in range(n):
+            for j in range(i, n):
+                if nums[i] > 0:
+                    break
+
+                if i > 0 and nums[i] == nums[i-1]:
+                    continue
+
+                left = i + 1
+                right = n - 1
+                while left < right:
+                    curr_sum = nums[i] + nums[j] + nums[left] + nums[right]
+
+                    if curr_sum == 0:
+
+                        res.append([nums[i], nums[left], nums[right]])
+
+                        while left < right and nums[left] == nums[left + 1]:
+                            left += 1
+                        
+                        while left < right and nums[right] == nums[right - 1]:
+                            right -= 1
+                        
+                        left += 1
+                        right -= 1
+                    elif curr_sum < 0:
+                        left += 1
+                    else:
+                        right -= 1
+            
+        return res
+    
