@@ -68,3 +68,103 @@ class Solution:
                     right -= 1
         return res
     
+
+'''
+V1：V1版本表示不会这东西，需要学习一下
+需要对撞指针，而且是嵌套在for循环里面的对撞
+'''
+
+class Solution:
+    def threeSum(self, nums: List[int]) -> List[List[int]]:
+        # 错误1：长度判断逻辑错误
+        # 三数之和需要至少3个元素，应该是 len(nums) < 3，而非 < 2
+        if len(nums) < 2:
+            return []
+
+        nums = sorted(nums)
+        results = []
+
+        for slow_index, slow_num in enumerate(nums):
+            # 错误2：外层基准数去重逻辑被注释，且原注释的去重写法也不优雅（not slow_index == 0 等价于 slow_index != 0）
+            # 即使不注释，该版本也没有内层双指针的去重，会产生重复三元组
+            # if not slow_index == 0 and slow_num == nums[slow_index - 1]:
+            #     continue
+
+            left_index = slow_index + 1
+            right_index = len(nums) - 1
+
+            while left_index < right_index:
+                left_num = nums[left_index]
+                right_num = nums[right_index]
+                if slow_num + left_num + right_num == 0:
+                    results.append([slow_num, left_num, right_num])
+                    # 错误3：找到一个解后直接break，终止双指针循环
+                    # 导致当前基准数下的其他可能解（比如多个和为0的组合）无法被找到
+                    break
+                elif slow_num + left_num + right_num < 0:
+                    left_index += 1
+                elif slow_num + left_num + right_num > 0:
+                    right_index -= 1
+            
+        return results
+        
+        
+
+'''
+V1修复版：去重逻辑
+
+'''
+
+class Solution:
+    def threeSum(self, nums: List[int]) -> List[List[int]]:
+        # 错误1：长度判断仍未修复，还是 len(nums) < 2
+        if len(nums) < 2:
+            return []
+
+        nums = sorted(nums)
+        results = []
+
+        for slow_index, slow_num in enumerate(nums):
+            # 错误2：外层基准数的去重仍被注释，未处理重复的基准数
+            # if not slow_index == 0 and slow_num == nums[slow_index - 1]:
+            #     continue
+
+            left_index = slow_index + 1
+            right_index = len(nums) - 1
+
+            while left_index < right_index:
+                left_num = nums[left_index]
+                right_num = nums[right_index]
+                if slow_num + left_num + right_num == 0:
+                    results.append([slow_num, left_num, right_num])
+
+                    # 问题1：去重逻辑后未移动左右指针，导致死循环
+                    # 比如输入[-1,0,1,2,-1,-4]，找到[-1,0,1]后，left和right指针不移动，while循环会无限执行
+                    # 问题2：右指针去重条件错误
+                    # 排序后数组是升序，右指针要跳过重复值，应判断 nums[right_index] == nums[right_index - 1] 吗？
+                    # 实际应为：先移动指针，再去重；且当前写法会跳过未处理的重复值
+                    # 去重：跳过left指针的重复值
+                    while left_index < right_index and nums[left_index] == nums[left_index + 1]:
+                        left_index += 1
+                    # 去重：跳过right指针的重复值（条件逻辑有问题）
+                    while left_index < right_index and nums[right_index] == nums[right_index-1]:
+                        right_index -= 1
+                    
+                    left_index += 1
+                    right_index -= 1
+
+                elif slow_num + left_num + right_num < 0:
+                    left_index += 1
+                elif slow_num + left_num + right_num > 0:
+                    right_index -= 1
+            
+        return results
+
+
+
+
+
+
+
+
+

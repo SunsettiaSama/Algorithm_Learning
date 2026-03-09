@@ -44,3 +44,54 @@ class Solution:
         max_time = max(dist[1:n+1])
         # 如果最长时间还是无穷远，说明有人没收到，返回-1；否则返回最长时间
         return max_time if max_time != float('inf') else -1
+    
+
+"""
+
+V1
+
+"""
+
+
+class Solution:
+    def networkDelayTime(self, times: List[List[int]], n: int, k: int) -> int:
+        # 1. 正确构建邻接表：起点→[(邻居, 权重), ...]
+        graph = {}
+        for u, v, w in times:
+            if u not in graph:
+                graph[u] = []
+            graph[u].append((v, w))  # 每个起点对应一个列表，存储所有邻居
+        
+        # 2. 初始化距离数组：节点编号1~n，所以列表长度n+1（索引0不用）
+        min_distances = [float('inf')] * (n + 1)
+        min_distances[k] = 0  # 起始节点k的距离为0
+        visited = set()
+        
+        while len(visited) < n:
+            # 找当前未访问的、距离最短的节点
+            current_node = -1
+            current_distance = float('inf')
+            # 遍历1~n（节点编号从1开始）
+            for node_id in range(1, n + 1):
+                if min_distances[node_id] < current_distance and node_id not in visited:
+                    current_node = node_id
+                    current_distance = min_distances[node_id]
+            
+            # 无有效节点（存在不可达节点）
+            if current_node == -1:
+                break
+            
+            visited.add(current_node)
+            
+            # 遍历当前节点的所有邻居（处理key不存在的情况）
+            for neighbor_node, neighbor_distance in graph.get(current_node, []):
+                if neighbor_node in visited:
+                    continue
+                # 更新距离
+                new_distance = current_distance + neighbor_distance
+                if new_distance < min_distances[neighbor_node]:
+                    min_distances[neighbor_node] = new_distance
+        
+        # 3. 处理边界条件：计算1~n的最大距离，若有inf（不可达）返回-1
+        max_delay = max(min_distances[1:])  # 只看1~n的节点
+        return max_delay if max_delay != float('inf') else -1
