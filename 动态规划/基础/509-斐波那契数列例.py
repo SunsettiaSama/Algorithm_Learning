@@ -81,3 +81,27 @@ class Solution:
         # 返回原问题的解：第n项的子问题结果
         return dp[n]
 
+"""
+V0
+
+
+"""
+class Solution:
+    def fib(self, n: int) -> int:
+
+        if n == 0:
+            return 0
+        if n == 1:
+            return 1
+        
+        # 初始化dp
+        dp = [0 for i in range(n)] # 索引边界：注意，dp[n]，这里的计算结果应该是n，而不是n+1
+        dp[0] = 0
+        dp[1] = 1
+
+        for i in range(2, n):
+            dp[i] = dp[i - 1] + dp[i - 2]
+        
+        return dp[n] # 问题同上
+
+

@@ -24,3 +24,31 @@ class Solution:
             
         # 注意：返回右下角位置，索引为(m-1, n-1)（数组索引从0开始）
         return dp[m - 1][n - 1]
+    
+
+"""
+V1
+"""
+
+
+class Solution:
+    def uniquePaths(self, m: int, n: int) -> int:
+
+        # 使用dp解
+        # 显然，这里需要初始化一个网格状的dp解，并进行贪心搜索
+        dp = [[0 for i in range(n)] for j in range(m)]
+
+        # 很显然，向右或者向下只有一条路径
+        # 初始化
+        for i in range(m):
+            dp[i][0] = 1
+
+        for i in range(n):
+            dp[0][i] = 1
+        
+        # 动态规划核心：状态转移
+        for row_index in range(1, m):
+            for col_index in range(1, n):
+                dp[row_index][col_index] = dp[row_index - 1][col_index] + dp[row_index][col_index - 1]
+
+        return dp[m - 1][n - 1]
