@@ -248,3 +248,39 @@ def skip_right_nums(left_index, right_index, s:str):
     while left_index < right_index and not s[right_index].isalnum():
         right_index -= 1
     return right_index
+
+
+
+"""
+V4
+"""
+
+class Solution:
+    def isPalindrome(self, s: str) -> bool:
+        left_index = 0
+        right_index = len(s) - 1
+
+        s = s.lower()
+
+        while left_index < right_index:
+            # 先跳过空格，标点符号这些东西
+
+            while left_index < right_index and not s[left_index].isalnum():
+                left_index += 1
+
+            while left_index < right_index and not s[right_index].isalnum():
+                right_index -= 1
+
+            # 比较左右字符
+            if not s[left_index] == s[right_index]:
+                return False
+            
+            # 同时移动左右指针
+            left_index += 1
+            right_index -= 1
+
+            # 边界条件：比较完就弹出
+            if left_index >= right_index:
+                break
+                
+        return True

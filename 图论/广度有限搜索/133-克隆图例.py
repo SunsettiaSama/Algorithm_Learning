@@ -11,7 +11,7 @@ class Node:
     def __init__(self, val = 0, neighbors = None):
         self.val = val
         self.neighbors = neighbors if neighbors is not None else []
-        
+
 import collections
 
 class solu:
@@ -72,5 +72,75 @@ class Solution:
                 visited[node_u].neighbors.append(visited[node_v])
 
         return visited[node]
+    
+
+"""
+V1
+"""
+class Solution:
+    def cloneGraph(self, node: 'Node') -> 'Node':
+        if not node:
+            return None
+        
+        # 克隆，需要处理所有的节点
+        visited = dict()
+        visited[node] = Node(node.val, [])
+
+        queue = collections.deque()
+        queue.append(node)
+
+        while queue:
+            
+            curr_node: Node = queue.popleft()
+
+            for curr_node_neighbor in curr_node.neighbors:
+                # 错误1：判断对象写错（核心逻辑错误）
+                # 原意是检查「邻居节点」是否已克隆，却错误检查「当前节点」
+                # 导致：本该克隆的邻居没克隆，不该克隆的重复克隆
+                if curr_node not in visited:
+                    # 这里虽然创建了邻居的克隆节点，但触发条件完全错误
+                    visited[curr_node_neighbor] = Node(curr_node_neighbor.val, [])
+                    queue.append(curr_node_neighbor)
+
+                # 错误2：添加原邻居而非克隆邻居（本质错误）
+                # 问题：克隆节点的邻居列表应该指向「克隆后的邻居节点」，而非原节点
+                # 后果：最终返回的克隆图和原图共用节点，等于没克隆
+                visited[curr_node].neighbors.append(curr_node_neighbor)
+
+        return visited[node]
+
+
+
+"""
+V1 修复版
+"""
+
+class Solution:
+    def cloneGraph(self, node: 'Node') -> 'Node':
+        if not node:
+            return None
+        
+        visited = dict()
+        visited[node] = Node(node.val, [])
+
+        queue = collections.deque()
+        queue.append(node)
+
+        while queue:
+
+            curr_node: Node = queue.popleft()
+            
+            for curr_node_neighbor in curr_node.neighbors:
+
+                if curr_node_neighbor not in visited:
+
+                    visited[curr_node_neighbor] = Node(curr_node_neighbor.val, [])
+                    queue.append(curr_node_neighbor)
+                    
+                # 这里一定注意，是克隆后的邻居，而不是克隆前的
+                visited[curr_node].neighbors.append(visited[curr_node_neighbor])
+        
+        return visited[node]
+
 
 
