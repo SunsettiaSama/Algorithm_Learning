@@ -33,3 +33,38 @@ class Solution:
         # 循环终止时left > right，right是最后一个满足mid² ≤x的合法值，返回left会得到错误结果
         return left
 
+"""
+V1
+"""
+
+class Solution:
+    def mySqrt(self, x: int) -> int:
+
+        if x == 0:
+            return 0
+        if x == 1:
+            return 1
+        
+
+        # 使用二分查找
+        left_index = 0
+        right_index = x // 2
+
+        while left_index < right_index: # 这里有个问题，需要小于等于，而不是小于，小于的话边界条件错误
+            # 即如果是小于，则最后一个数字，left == right时，最后一个数没有得到正确的检查
+
+            mid_index = (left_index + right_index) // 2
+            mid_square = mid_index * mid_index
+
+            # 更新两指针
+            if mid_square < x:
+                left_index = mid_index + 1
+            elif mid_square > x:
+                right_index = mid_index - 1
+            else:
+                return mid_index
+            
+        return right_index
+
+
+

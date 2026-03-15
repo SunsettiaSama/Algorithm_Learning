@@ -179,8 +179,123 @@ def searchIsland(grid, row_index, column_index):
     searchIsland(grid, row_index, column_index + 1)
 
 
+"""
+V3 手搓版本
+
+"""
+
+from typing import List
+
+class Solution:
+    def numIslands(self, grid: List[List[str]]) -> int:
+        
+        # 深搜DFS
+        row_nums = len(grid)
+        col_nums = len(grid[0])
+
+        counts = 0
+
+        for row_index in range(row_nums):
+            for col_index in range(col_nums):
+
+                if grid[row_index][col_index] == "1":
+                    counts += 1
+                    self.searchIsland(grid, row_index, col_index)
+        
+        return counts
+
+        
+    # 岛屿搜索
+    def searchIsland(self, grid, row_index, col_index):
+        
+        if row_index < 0 or row_index >= len(grid) or col_index < 0 or col_index >= len(grid[0]):
+            return 
+
+        if grid[row_index][col_index] == "0":
+            return 
+        
+        # DFS
+        grid[row_index][col_index] = "0"
+
+        # 上下左右拓展，深度搜索
+        self.searchIsland(grid, row_index + 1, col_index)
+        self.searchIsland(grid, row_index - 1, col_index)
+        self.searchIsland(grid, row_index, col_index + 1)
+        self.searchIsland(grid, row_index, col_index - 1)
 
 
+"""
+V3 手搓版本
+
+BFS
+
+"""
+from collections import deque
+
+class Solution:
+    def numIslands(self, grid: List[List[str]]) -> int:
+        # BFS
+        row_nums = len(grid)
+        col_nums = len(grid[0])  # 问题1：未处理grid为空的情况（比如grid=[]），直接取grid[0]会报错
+
+        counts = 0
+
+        for row_index in range(row_nums):
+            for col_index in range(col_nums):
+                if grid[row_index][col_index] == "1":
+                    counts += 1
+                    self.searchIsland(grid, row_index, col_index)
+        
+        return counts
+    
+    def searchIsland(self, grid, row_index, col_index):
+        # BFS核心：队列初始化
+        queue = deque()
+        queue.append((row_index, col_index))
+
+        while queue:
+            # 取出队列头部元素
+            curr_row_index, curr_col_index = queue.popleft()
+
+            # 问题2：未检查坐标是否越界（比如row=-1/row>=行数，列同理），直接访问grid会触发索引越界报错
+            # 问题3：逻辑死循环！判断当前是"1"就把自己重新加入队列，队列永远不为空，无限循环
+            if grid[curr_row_index][curr_col_index] == "1":
+                queue.append((curr_row_index, curr_col_index))
+            
+            # 问题4：仅把当前节点置为"0"，未遍历上下左右四个方向，无法把整个岛屿的"1"都置为"0"，导致重复计数
+            grid[curr_row_index][curr_col_index] = "0"
+
+        return 
+    
+
+
+    def searchIsland(self, grid, row_index, col_index):
+        row_nums = len(grid)
+        col_nums = len(grid[0])
+        queue = deque()
+        # 先把初始陆地置为"0"（避免重复加入队列），再加入队列
+        grid[row_index][col_index] = "0"
+        queue.append((row_index, col_index))
+
+        # 定义上下左右四个方向（核心：遍历相邻陆地）
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+        while queue:
+            # 取出当前陆地坐标
+            curr_row, curr_col = queue.popleft()
+
+            # 遍历四个方向的相邻坐标（修复问题4）
+            for dr, dc in directions:
+                new_row = curr_row + dr
+                new_col = curr_col + dc
+
+                # 检查新坐标是否有效（不越界）+ 是未访问的陆地（修复问题2）
+                if 0 <= new_row < row_nums and 0 <= new_col < col_nums and grid[new_row][new_col] == "1":
+                    # 置为"0"标记已访问，避免重复处理（修复问题3）
+                    grid[new_row][new_col] = "0"
+                    # 加入队列，后续处理它的相邻陆地
+                    queue.append((new_row, new_col))
+        return
 
 
 

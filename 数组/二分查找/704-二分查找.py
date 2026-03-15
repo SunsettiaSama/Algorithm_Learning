@@ -75,6 +75,37 @@ class Solution:
         return -1
 
 
+"""
+V2版本
+
+"""
+class Solution:
+    def search(self, nums: List[int], target: int) -> int:
+
+        # 有序，检查target是否在nums中存在下标
+
+        if len(nums) == 0:
+            return -1
+        
+        left_index = 0
+        right_index = len(nums) - 1
+
+        while left_index <= right_index:
+
+            mid = (left_index + right_index) // 2
+            mid_num = nums[mid]
+
+            if mid_num < target:
+                left_index = mid + 1
+            elif mid_num > target:
+                right_index = mid - 1
+            else:
+                return mid
+        
+        return -1
+    
+
+
 
 
 

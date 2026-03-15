@@ -1,4 +1,6 @@
 
+
+from typing import List
 class Solution:
     # 解法一、图（二叉树）的深度优先遍历
     def findTargetSumWays(self, nums, target):
@@ -84,5 +86,57 @@ class Solution:
         return result
 
 
+"""
+V0
 
-    
+彻底失败
+"""
+
+class Solution:
+
+    def findTargetSumWays(self, nums: List[int], target: int) -> int:
+        memo = {}
+
+        def dfs(index, current_sum):
+            if (index, current_sum) in memo:
+                return memo[(index, current_sum)]
+            
+            if index == len(nums):
+                res = 1 if current_sum == target else 0
+                memo[(index, current_sum)] = res
+                return res
+            
+            add = dfs(index + 1, current_sum + nums[index])
+            sub = dfs(index + 1, current_sum - nums[index])
+
+            total =  add + sub
+            
+            # 所以这里的memo记录的是总的，当前的计数数目，也就是走到这一步，有多少种结果
+            memo[(index, current_sum)] = total
+            return total
+        
+        return dfs(0, 0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
