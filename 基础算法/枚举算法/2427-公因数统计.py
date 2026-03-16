@@ -9,10 +9,6 @@ class Solution:
                 num += 1
         return num
 
-
-
-
-
 class Solution:
     def commonFactors(self, num1, num2):
 
@@ -28,8 +24,26 @@ class Solution:
         return res
 
 
+"""
+V0
+"""
+# 最大公因数求取
 
+class Solution:
+    def commonFactors(self, num1, num2):
 
+        if num1 == 1 or num2 == 1:
+            return 1
+        
+        counts = 0
+
+        for index in range(1, min(num1, num2) + 1):
+
+            if num1 % index == 0 and num2 % index == 0:
+                # 记录公因数，反向遍历
+                counts += 1
+        
+        return counts
 
 
 
