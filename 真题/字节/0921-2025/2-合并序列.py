@@ -88,3 +88,184 @@ def main():
     # 输出结果
     print(' '.join(res))
 
+
+
+
+"""
+V1 手搓版
+
+"""
+
+
+import sys
+from collections import defaultdict
+
+def get_input():
+    lines = sys.stdin.read().split(' ')
+    n, k = map(int, lines)
+    return n, k
+
+# 【思路核心错误】merge函数完全违背题目合并规则，逻辑全错
+def merge(cache: list[list], k):
+    """
+    合并
+    """
+    # 【错误1】queue初始值[-1]完全无意义，后续idx=-1的判断逻辑混乱
+    queue = [-1]
+
+    while queue:
+        # 【错误2】pop(0)是队列操作，但queue里只有无效的-1，根本处理不到实际的合并位置
+        idx = queue.pop(0)
+
+        # 【错误3】cache[idx]对应cache的倒数第|idx|个元素，但你不知道这个元素是否是刚加的1，且len判断逻辑错
+        if len(cache[idx]) == k:
+        
+            # 【错误4】abs(idx) > len(cache) 这个条件永远不成立（idx是负数，abs(idx)是正数，len(cache)是当前子列表数，不可能大于）
+            if abs(idx) > len(cache):
+                cache.insert(0, [])
+
+            # 【错误5】合并规则是：k个x→1个x+1（替换原来的k个），但你却把x+1加到前一个列表里，完全违背题目！
+            curr_num = cache[idx][0] + 1
+            cache[idx - 1].append(curr_num)
+            cache[idx] = []
+
+            # 【错误6】只加了idx-1到队列，但连锁合并需要持续检查前一个位置，队列处理逻辑无效
+            queue.append(idx - 1)
+
+    return cache 
+
+def main():
+    n, k = get_input()
+    cache = [[]]
+
+    # 【思路错误】循环n次加1，但merge函数没正确处理合并，等于白加
+    for i in range(n):
+        cache[-1].append(1)
+        cache = merge(cache, k)
+
+    results = []
+    for lis in cache:
+        results.extend(lis)
+
+    # 【语法错误】results是整数列表，join只能接字符串，必须转成str，否则直接报错
+    print(' '.join(results))
+        
+
+
+"""
+所以这道题用堆栈解是不可能的，因为它有10^18次操作的可能性，必须使用数学解法
+进制解法
+
+"""
+
+
+import sys
+
+def main():
+    n, k = map(int, sys.stdin.read().split())
+    if n == 0:
+        print(0)
+        return
+    
+    # 步骤1：转k进制，得到「低位到高位」的 digits
+    digits = []
+    temp = n
+    while temp > 0:
+        digits.append(temp % k)
+        temp = temp // k
+    
+    # 步骤2：反转成「高位到低位」（关键！之前的核心bug就在这）
+    digits = digits[::-1]
+    
+    res = []
+    # 步骤3：遍历每一位，计算对应幂次
+    # 总位数是 len(digits)，最高位幂次是 len(digits)-1
+    current_power = len(digits) - 1
+    for d in digits:
+        if d > 0:
+            # 该位有d个 (power+1)，拼接d次
+            res.append(str(current_power + 1) * d)
+        current_power -= 1
+    
+    # 步骤4：输出拼接结果（注意：不要加空格！）
+    print(''.join(res))
+
+if __name__ == "__main__":
+    main()
+
+
+"""
+
+V1 手搓，战损版
+"""
+
+import sys
+from collections import defaultdict
+
+def get_input():
+    lines = sys.stdin.read().split(' ')
+    n, k = map(int, lines)
+    return n, k
+
+
+def main():
+    n, k = get_input()
+
+    digits = []
+
+    while n > k: # 这里注意条件，是n > 0,不然会有溢出的数，没有添加进来的
+
+        digits.append(n % k)
+        n = n // k
+    
+    # 得到了一整条序列
+    res_str = ""
+    for i in range(len(digits)):
+        # 这里注意一个问题，他有一个转换的过程，本质上它的含义是幂次，所以有问题
+        res_str = str(digits[i]) + res_str 
+
+    print(res_str)
+    
+if __name__ == "__main__":
+    main()
+
+
+"""
+
+V1 手搓，修复版
+"""
+
+import sys
+from collections import defaultdict
+
+def get_input():
+    lines = sys.stdin.read().split()  # 去掉' '，自动过滤空字符
+    n = int(lines[0])
+    k = int(lines[1])
+    return n, k
+
+
+def main():
+    n, k = get_input()
+    digits = []
+    temp = n  # 新增：用temp存n，避免修改原n（不影响，但更规范）
+    while temp > 0:
+        digits.append(temp % k)
+        temp = temp // k
+    
+    res_str = ""
+    # 修正错误1+2：遍历digits，计算正确的幂次和重复次数
+    for i in range(len(digits)):
+        cnt = digits[i]  # 重复次数（digits[i]）
+        if cnt > 0:
+            power = i  # 正确幂次：digits[i]对应2^i
+            num = power + 1  # 要输出的数字（幂次+1）
+            new_part = str(num) * cnt  # 重复cnt次，比如num=1,cnt=366→"111...1"
+            res_str = new_part + res_str  # 高位在前拼接
+    
+    print(res_str)
+
+if __name__ == "__main__":
+    main()
+
+    
