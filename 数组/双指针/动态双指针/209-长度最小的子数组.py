@@ -82,5 +82,100 @@ class Solution:
         
         return min_len if min_len != float('inf') else 0
 
+"""
+V1 手搓版
+
+"""
+
+class Solution:
+    def minSubArrayLen(self, target, nums):
+
+
+        if sum(nums) < target:
+            return 0
+        
+        # 快慢指针，启动
+        slow = 0
+        min_len = len(nums) + 1
+        curr_sum = 0
+
+        for fast in range(len(nums)):
+            # 快指针，维护区间，检查是否为不重复的子区间
+
+            while nums[fast] in nums[slow: fast]:
+                slow += 1
+
+            if sum(nums[slow: fast]) >= target:
+                return fast, slow
+            
+        return 0
+    
+
+
+
+"""
+V1 修复版
+
+"""
+class Solution:
+    def minSubArrayLen(self, target, nums):
+
+
+        if sum(nums) < target:
+            return 0
+        
+        # 快慢指针，启动
+        slow_index = 0
+        min_len = len(nums) + 1
+        curr_sum = 0
+
+        for fast_index in range(len(nums)):
+            # 快慢指针更新逻辑和前面那个题不一样
+            curr_sum += nums[fast_index]
+
+            while curr_sum >= target:
+                curr_len = fast_index - slow_index + 1
+
+                min_len = min(min_len, curr_len)
+
+                curr_sum -= nums[slow_index]
+
+                slow_index += 1
+
+        return 0 if min_len == len(nums) + 1 else min_len
+
+
+
+
+
+"""
+V1 修复版，战损版
+
+"""
+
+
+class Solution:
+    def minSubArrayLen(self, target, nums):
+
+        if sum(nums) < target:
+            return 0
+        
+        # 快慢指针，启动
+        slow_index = 0
+        min_len = len(nums) + 1
+        curr_sum = 0
+
+        for fast_index in range(len(nums)):
+            # 快慢指针更新逻辑和前面那个题不一样
+            curr_sum += nums[fast_index]
+
+            while curr_sum >= target:
+                curr_sum -= nums[slow_index]
+                
+                min_len = min(min_len, fast_index - slow_index + 1)
+
+                slow_index += 1
+        
+        return 0 if min_len == len(nums) + 1 else min_len
 
 

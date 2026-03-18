@@ -56,6 +56,56 @@ class Solution:
 
 
 
+"""
+V1 手搓版
 
+"""
 
+class Solution:
+    def lengthOfLongestSubstring(self, s: str) -> int:
 
+        char_set = set()
+        
+        slow_index = 0
+        max_res = 0
+
+        # 快慢指针，维护子区间
+        for fast_index in range(len(s)):
+
+            # 往前挪动快指针，检查新的字符是否有重复
+            # 如果没有重复，则向前挪，扩大维护区间
+            # ERROR: 没有把当前的字符加入清单,包错的
+            if s[fast_index] not in char_set:
+                max_res = max(max_res, fast_index - slow_index) # ERROR:索引计算错误,还要加一才对
+            # 如果重复，缩小左区间，直到不再重复为止
+            else:
+                while s[fast_index] in char_set:
+                    char_set.remove(s[slow_index])
+                    slow_index += 1
+        
+        return max_res
+
+"""
+V1 修复版
+
+"""
+
+class Solution:
+    def lengthOfLongestSubstring(self, s: str) -> int:
+
+        char_set = set()  # 记录“当前窗口里的字符”（摆货的清单）
+        slow_index = 0    # 滑动窗口的左边界（货架左边）
+        max_res = 0       # 记录最长长度（记下来最长的货架长度）
+
+        # fast_index是滑动窗口的右边界（货架右边），一步步往右挪
+        for fast_index in range(len(s)):
+            while s[fast_index] in char_set:
+                char_set.remove(s[slow_index])
+                slow_index += 1
+            
+            char_set.add(s[fast_index])
+
+            current_length = fast_index - slow_index + 1
+            max_res = max(max_res, current_length)
+
+        return max_res
