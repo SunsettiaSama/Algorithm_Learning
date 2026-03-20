@@ -269,3 +269,53 @@ if __name__ == "__main__":
     main()
 
     
+"""
+V2 手搓版
+"""
+
+# 这个题目我记得需要动用一些小乔四,因为k有10^5次操作,这个操作量相当大,所以不可能一蹴而就
+import sys
+def get_input():
+
+    string = sys.stdin.read()
+    n, k = map(int, string.split(' '))
+
+    return n, k
+
+
+def main():
+
+    n, k = get_input()
+
+    # 结果保存表，表的含义为，该位置的余数
+    res = []
+
+    # 处理第一次
+    temp = n
+    # 如果没有除尽
+    while temp != 0:
+        
+        # 这样就会得到一张反转的表，k进制表
+        res.append(temp % k)
+        temp = temp // k
+
+    # 十进制拼接
+    res_string = ''
+
+    # 注意，这里不再需要反转
+    for index in range(len(res)):
+        counts = res[index] # 重复的频次
+
+        if counts > 0:
+            # 问题来了，这个位置该如何计算，重复的次数
+            # 我知道了，我被二进制误导了，这里实际上确实是重复的次数，二进制因为很特殊，只有一个位，所以被误导了
+            # 实际上，13个1形成的digits = [4, 2]的5进制，允许22111这种东西，所以才会有它的这种实现过程
+            item_string = str((index + 1)) * counts
+            res_string = item_string + res_string
+
+    print(res_string)
+        
+
+if __name__ == "__main__":
+    main()
+

@@ -165,10 +165,112 @@ if __name__ == "__main__":
 """
 V1 手搓
 """
-# 虽然有10^18次方个数，但实际上，这个题目其实是字符串的排列组合，问不大于该数的前提下，有多少种排列组合的做法
-# 比如给一个数字18，那么要从0~9中间，抽取两个数，然后判断是否有超级上升数
-# 不行，11：54 0317 换个其他的思路来做吧，这个先留着
 
+from typing import List
+
+# 我知道这个题怎么做了
+def get_input():
+    """正确读取输入：第一行T，后续T行是m"""
+    import sys
+    # 读取所有输入，按行分割并过滤空行（避免换行符/空格干扰）
+    lines = [line.strip() for line in sys.stdin.read().splitlines() if line.strip()]
+    T = int(lines[0])  # 测试组数
+    m_list = [int(line) for line in lines[1:T+1]]  # 每组的m
+    return T, m_list
+
+
+def preloadUpperNums() -> List[int]:
+
+    # 预先生成上升数，上升数数目极少，二分查找近似O(1)
+    # 先用dfs来查找上升数
+
+    upper_nums = []
+
+    def dfs(curr_num, total_string: str):
+
+        # 如果当前的选择比之前的更小，那么就可以弹出
+        if len(total_string) == 18:
+            upper_nums.append(int(total_string))
+            return 
+        
+        # 不对，我是来做排列组合的
+        # 对当前的情况进行处理：添加大于的数字
+        total_string += str(curr_num)
+
+        for candidate in range(curr_num, 10):
+            # 这里导致candidate一定是单增加，不减的
+
+            # 进行下一个数字的选择
+            dfs(candidate, total_string = total_string)
+
+            # 弹出该选择
+            total_string = total_string[:-1]
+
+        # 这样，就拿到了所有疑似上升数的数字
+        # 顺带，它是有序的
+
+    # 初始化，第一轮得我们自己做？
+    for curr_num in range(1, 10):
+        dfs(curr_num = curr_num, total_string = '')
+    
+    # 好，这样就找到了所有的上升数
+    return upper_nums
+
+def isSupperUpper(num):
+
+    temp = str(num * num)
+
+    # 超级上升数也不能大于10 ** 10
+    if len(temp) > 10:
+        return False
+    
+    for index in range(1, len(temp)):
+        if not temp[index] > temp[index - 1]:
+            return False
+        
+    return True
+
+def SearchIndex(target, num_list):
+
+    left = 0
+    right = len(num_list) - 1
+
+    while left <= right:
+        mid = (left + right) // 2
+
+        if target > num_list[mid]:
+            left = mid + 1
+        elif target < num_list[mid]:
+            right = mid - 1
+        else:
+            return mid
+        
+    # 小于该mid的值
+    return right
+
+def main():
+
+    T, m_list = get_input()
+
+    upper_num_list = preloadUpperNums()
+    super_upper_list = []
+
+    results = []
+
+    # 初始化超级上升数列表
+    for num in upper_num_list:
+        if isSupperUpper(num):
+            super_upper_list.append(num)
+
+    # 那么现在有了超级上升数列表，接下来进行二分查找
+    for i in range(T):
+        m = m_list[i]
+        results.append(SearchIndex(m, num_list = super_upper_list))
+
+    print(" ".join(map(str, results)))
+
+if __name__ == "__main__":
+    main()
 
 
 

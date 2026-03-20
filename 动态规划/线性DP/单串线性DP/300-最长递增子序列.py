@@ -34,3 +34,21 @@ class Solution:
                     # 而第四个值dp[3]比前面的都大，那么就取出所有字串的最大值，再加一，也就是3 + 1
         
         return max(dp)
+    
+"""
+V1 试图手写
+"""
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
+
+        # 状态：当前格子，状态转移和元胞自动机
+        # 当前格子：截至该位置的最长递增子序列长度
+        dp = [1 for i in range(len(nums))]
+
+        for num_index in range(len(nums)):
+            for update_index in range(num_index):
+                if nums[num_index] > nums[update_index]:
+                    dp[num_index] = max(dp[num_index], dp[update_index] + 1)
+
+        return max(dp)
+

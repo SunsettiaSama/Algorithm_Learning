@@ -52,3 +52,31 @@ class Solution:
                 dp[row_index][col_index] = dp[row_index - 1][col_index] + dp[row_index][col_index - 1]
 
         return dp[m - 1][n - 1]
+    
+
+"""
+
+V2
+"""
+class Solution:
+    def uniquePaths(self, m: int, n: int) -> int:
+        # 能够显式建立状态方程,使用dp做解
+
+        # 每一个格子被定义为到达当前位置的路径可能数量
+        dp = [[0 for i in range(n)] for j in range(m)]
+
+        # 初始化0行，0列，因为不可能向上走，所以可能路径为1
+        for i in range(m):
+            dp[i][0] = 1
+        for j in range(n):
+            dp[0][j] = 1
+
+        # 状态转移过程
+        # 第i、j个位置，仅有可能为i-1的位置和j-1的位置挪过来
+        for i in range(1, m):
+            for j in range(1, n):
+                dp[i][j] = dp[i - 1][j] + dp[i][j - 1]
+
+        return dp[m - 1][n - 1]
+
+

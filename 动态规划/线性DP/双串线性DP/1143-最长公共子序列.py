@@ -37,3 +37,9 @@ class Solution:
                     dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])
 
         return dp[size1][size2]
+    
+
+"""
+V1 手搓版
+
+"""

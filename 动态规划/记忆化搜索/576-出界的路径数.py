@@ -120,3 +120,178 @@ class Solution:
                         prev_dp = dp
                     
         return ans % MOD
+    
+
+
+"""
+V1 递归手搓
+
+"""
+MOD = 10**9 + 7
+
+class Solution:
+    def findPaths(self, m: int, n: int, maxMove: int, startRow: int, startColumn: int) -> int:
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        # 记忆化递归
+        memo = dict()
+        # 构筑递归
+
+        def dfs(i, j, k):
+            # 假设在第i, j个格子时，k为剩余步数
+            # 错误1：边界判断逻辑错误（优先级+越界条件）
+            # 1. and优先级高于or，导致条件等价于 i<0 or i>m or j<0 or (j>n and k>=0)，逻辑完全错误
+            # 2. 越界条件错误：矩阵行范围是0~m-1，列是0~n-1，应该是i>=m 而非i>m，j>=n而非j>n
+            # 3. k>=0是冗余条件（k是剩余步数，递归中k只会>=0）
+            if i < 0 or i > m or j < 0 or j > n and k >= 0: # if i < 0 or i >= m or j < 0 or j >= n:
+                return 1
+            
+            # 反之，在界内
+            if k == 0:
+                return 0
+            
+            if (i, j, k) in memo:
+                return memo[(i, j, k)]
+
+            # 计算第i、j步还能往哪边走
+            # 四个方向都尝试一下
+            res = 0
+            # 错误2：变量拼写错误：j_idff 应为 j_diff
+            for i_diff, j_idff in directions:
+                res += dfs(i + i_diff, j + j_idff, k - 1)
+                # 错误3：累加时未取模，可能导致中间值溢出（即使最后取模，大数累加也会降低效率）
+
+            memo[(i, j, k)] = res % MOD
+            return memo[(i, j, k)]
+        
+        return dfs(startRow, startColumn, maxMove)
+
+
+"""
+V1 递归修复
+
+"""
+MOD = 10**9 + 7
+
+class Solution:
+    def findPaths(self, m: int, n: int, maxMove: int, startRow: int, startColumn: int) -> int:
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        # 记忆化递归
+        memo = dict()
+        # 构筑递归
+
+        def dfs(i, j, k):
+            if i < 0 or i >= m or j < 0 or j >= n: # 
+                return 1
+            
+            # 反之，在界内
+            if k == 0:
+                return 0
+            
+            if (i, j, k) in memo:
+                return memo[(i, j, k)]
+
+            # 计算第i、j步还能往哪边走
+            # 四个方向都尝试一下
+            res = 0
+            # 错误2：变量拼写错误：j_idff 应为 j_diff
+            for i_diff, j_idff in directions:
+                res += dfs(i + i_diff, j + j_idff, k - 1) % MOD
+
+            memo[(i, j, k)] = res % MOD
+            return memo[(i, j, k)]
+        
+        return dfs(startRow, startColumn, maxMove)
+
+
+"""
+V1 动态规划算法 手搓
+
+"""
+
+MOD = 10**9 + 7
+import copy
+
+class Solution:
+    def findPaths(self, m: int, n: int, maxMove: int, startRow: int, startColumn: int) -> int:
+
+        directions = [(-1,0), (1,0), (0,-1), (0,1)]
+
+        # 初始化，很显然，初始化 一个网格
+        # 每个网格代表当前位置可以将球移出边界的路径数
+        dp = [[0 for i in range(n)] for j in range(m)] # ERROR: 行和列方向错误
+        
+        # 初始化错误
+        dp[startRow][startColumn] = 1
+
+        dp_each_step = self.build_prev_grid(m, n, directions)
+
+        # 那么关键就在于，需要一新一旧的网格，在时间步长上，如果在第i步，走到第i+1步，那么会产生多少个出界的可能
+        # ERROR:需要copy一个新的网格以实现逻辑,不能在原网格上修改,原网格上修改会炸,所以不行
+        for k in range(1, maxMove + 1):
+            prev_dp = copy.deepcopy(dp)
+
+            for i in range(m):
+                for j in range(n):
+                    # 一定不会出界，这是前提条件
+                    # 所以其实是四个格子叠加到当前格子，然后还要求不能出界
+                    # 出界就炸
+                    for i_diff, j_diff in directions:
+                        if not (i + i_diff < 0 or i + i_diff >= m or j + j_diff < 0 or j + j_diff >= n):
+                            dp[i][j] = (prev_dp[i + i_diff][j + j_diff] + dp_each_step[i][j]) % MOD
+
+        return dp[startRow][startColumn] % MOD
+
+    def build_prev_grid(self, m, n, directions):
+
+        # 从第i步走到第i+1步
+        dp_each_step = [[0 for i in range(n)] for j in range(m)]
+
+        for i in range(m):
+            for j in range(n):
+                for i_diff, j_diff in directions:
+                    if i + i_diff < 0 or i + i_diff >= m or j + j_diff < 0 or j + j_diff >= n:
+                        dp_each_step[i][j] = (dp_each_step[i][j] + 1) % MOD
+
+        return dp_each_step
+
+
+
+
+"""
+V1 动态规划算法 修复版
+
+"""
+
+
+
+MOD = 10**9 + 7
+
+class Solution:
+    def findPaths(self, m: int, n: int, maxMove: int, startRow: int, startColumn: int) -> int:
+
+        directions = [(-1,0), (1,0), (0,-1), (0,1)]
+        # 初始化，很显然，初始化 一个网格
+        # 每个网格代表当前位置可以将球移出边界的路径数
+        prev_dp = [[0 for i in range(n)] for j in range(n)]
+
+        # 所以,状态转移方程不仅仅是空间上的,更是在其他方向上也可以发生状态转移方程
+        # 比如之前的题目就是i i+1 j j+1的关系,也即空间上的关系,而在该题目中,状态转移发生在步长上,和空间完全无关,反而和时间相关,类比一下的话
+
+        for k in range(1, maxMove + 1):
+            curr_dp = [[0 for _ in range(n)] for _ in range(m)]
+
+            for i in range(m):
+                for j in range(n):
+                    for di, dj in directions:
+                        ni, nj = i + di, j + dj
+
+                        if ni < 0 or ni >= m or nj < 0 or nj >= n:
+                            curr_dp[i][j] = (curr_dp[i][j] + 1) % MOD
+                        else:
+                            curr_dp[i][j] = (curr_dp[i][j] + prev_dp[ni][nj]) % MOD
+        
+            prev_dp = curr_dp
+
+        return prev_dp[startRow][startColumn]
+
+

@@ -270,3 +270,148 @@ if __name__ == "__main__":
 
 
 
+"""
+V1 手搓
+
+"""
+import sys
+
+def get_input():
+
+    input_lines = sys.stdin.read().strip().split("\n")
+    
+    n = int(input_lines[0])
+
+    values = [0] + [int(item) for item in input_lines[1].split(' ')]
+
+    adj = [[] for i in range(n + 1)]
+
+    for line in input_lines[2:]:
+        u, v = line.split(' ')
+        u, v = int(u), int(v)
+        if u == v:
+            continue
+        adj[u].append(v)
+        adj[v].append(u)
+
+    return n, values, adj
+
+def main():
+
+    # 深度搜索，树结构
+    n, values, adj = get_input()
+    print(values)
+    print(adj)
+
+    # 现在，有一个邻接表表示的树结构
+    # 使用深搜来解决这个问题
+    visited = []
+    results = [0 for i in range(n + 1)]
+
+    def dfs(node):
+
+        # 如果找到了已经访问过的节点，那么终止递归
+        if node in visited:
+            return 
+        
+        for neighbor_node in adj[node]:
+            # 深度搜索每一个邻节点  
+
+            # 处理当前节点
+            # 将当前邻接点标记为已经访问
+            visited.append(neighbor_node)
+
+            # 检索路径上的每一个节点，是否满足题意
+            for path_node in visited:
+                if values[node] == values[path_node]:
+                    results[node] += 1
+
+            # 递归进入下一个节点
+            dfs(neighbor_node)
+
+            # 回溯，弹出节点
+            visited.pop()
+    
+    # 对根节点展开搜索，没事， 根节点唯一确定
+    dfs(1)
+
+    print('results', " ".join(map(str, results)))
+
+if __name__ == "__main__":
+    main()
+
+"""
+V1 修复版
+
+"""
+
+import sys
+
+def get_input():
+
+    input_lines = sys.stdin.read().strip().split("\n")
+    
+    n = int(input_lines[0])
+
+    values = [0] + [int(item) for item in input_lines[1].split(' ')]
+
+    adj = [[] for i in range(n + 1)]
+
+    for line in input_lines[2:]:
+        u, v = line.split(' ')
+        u, v = int(u), int(v)
+        if u == v:
+            continue
+        adj[u].append(v)
+        adj[v].append(u)
+
+    return n, values, adj
+
+def main():
+
+    # 深度搜索，树结构
+    n, values, adj = get_input()
+
+    results = [0 for i in range(n + 1)]
+
+    # 用字典记录路径上的发生频率
+    freq = dict()
+
+    def dfs(current_node, parent_node):
+        
+        # 当前节点的出现次数，应该是父节点次数，加上频次比较次数
+
+        current_value = values[current_node]
+
+        same_value_count = freq.get(current_value, 0)
+
+        # 此时计算Cn2，以数学方法解出
+        results[current_node] = results[parent_node] + same_value_count
+
+        if current_value not in freq:
+            freq[current_value] = 1
+        else:
+            freq[current_value] += 1
+
+        for neighbor_node in adj[current_node]:
+
+            if neighbor_node == parent_node:
+                continue
+            # 深搜，进入邻居节点
+            dfs(neighbor_node, current_node)
+
+        freq[current_value] -= 1
+
+    # 接下来，开始初始化
+    root_node_value = values[1]
+    freq[root_node_value] = 1
+    results[1] = 0
+
+    # 遍历根节点的邻居，相当于把第一次递归放到外面来实现，毕竟没有父节点
+    for neighbor_node in adj[1]:
+        dfs(neighbor_node, 1)
+
+    print(" ".join(map(str, results[1: ])))
+
+if __name__ == "__main__":
+    main()
