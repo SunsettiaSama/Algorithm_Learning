@@ -3,7 +3,7 @@ class Solution:
         # 创建一个至少两步的链表
         result = [head.val]
         head = head.next
-        if result[0] < 
+        if result[0] < ？
 
         # 第零步
         # 返回其本身，可以作为终止条件
