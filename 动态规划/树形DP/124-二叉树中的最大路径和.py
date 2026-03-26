@@ -54,13 +54,46 @@ class Solution:
 
         return max(left_value, right_value) + node.val # 路径当然只能选一个啦
 
-
-
     def maxPathSum(self, root: Optional[TreeNode]) -> int:
         self.dfs(root)
         return self.ans
 
+"""
+V1 手搓
+
+"""
+
+
+
+
+class Solution:
+    def __init__(self):
+        self.ans = float('-inf')
 
     def maxPathSum(self, root: Optional[TreeNode]) -> int:
         self.dfs(root)
         return self.ans
+    
+    # 某个节点的状态被定义为当前节点的贡献值（左中右）
+    def dfs(self, node):
+        if not node:
+            return 0
+
+        # 左侧贡献值
+        ans_left = max(self.dfs(node.left), 0) # 允许两边都不选,非0的抛弃掉
+        # 右侧贡献值
+        ans_right = max(self.dfs(node.right), 0)
+
+        curr_ans = ans_left + ans_right + node.val
+        if curr_ans > self.ans:
+            self.ans = curr_ans
+
+        return max(ans_left, ans_right) + node.val
+        
+
+        
+
+        
+
+
+
