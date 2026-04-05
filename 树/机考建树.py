@@ -30,3 +30,26 @@ def get_input():
         pointer += 2
     
     return node_count, node_values, adjacency_list
+
+
+
+
+"""
+注意，树是有向图，有根节点
+
+一定是从根节点向下递归
+
+
+"""
+
+
+
+
+
+
+
+
+
+
+
+

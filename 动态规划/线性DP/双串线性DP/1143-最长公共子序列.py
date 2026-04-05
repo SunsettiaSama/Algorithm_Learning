@@ -64,4 +64,41 @@ class Solution:
         return dp[len(text1)][len(text2)]
 
 
+"""
+V2手搓版
+
+
+"""
+class Solution:
+    def longestCommonSubsequence(self, text1: str, text2: str) -> int:
+        
+        size1 = len(text1)
+        size2 = len(text2)
+
+        # 定义dp[i][j]为前i、j个字符串的最长公共子序列
+        # 从末端开始向前推导
+        dp = [[0 for _ in range(size1 + 1)] for j in range(size2 + 1)]
+
+        for i in range(1, size1 + 1):
+            for j in range(1, size2 + 1):
+                if text1[i - 1] == text2[j - 1]:
+                    dp[i][j]  = dp[i - 1][j - 1] + 1
+                else:
+                    dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])
+            
+
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
 

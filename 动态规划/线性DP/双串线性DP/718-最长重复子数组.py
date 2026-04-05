@@ -19,4 +19,9 @@ class Solution:
                 if dp[i][j] > res:
                     res = dp[i][j]
 
+                # 这里要求必须连续，如果不连续就寄
+                # 所以才有这种区别
+                # 我日，和最长公共子序列实现完全不同
+                
+
         return res

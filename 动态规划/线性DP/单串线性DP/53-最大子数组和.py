@@ -53,3 +53,28 @@ class Solution:
         
         # 所有结尾位置的最大值就是答案
         return max(dp)
+
+
+"""
+V1 手搓
+"""
+
+class Solution:
+    def maxSubArray(self, nums: List[int]) -> int:
+
+        # 子数组和  
+        n = len(nums)
+
+        dp = [0 for i in range(n)]
+        # 我们不可以选择加还是不加，在第一个数的时候，我们的最大和就只有它自己
+        dp[0] = nums[0] # 为什么初始化的时候，dp[0]就是nums[0]
+        
+        for i in range(1, n):
+            dp[i] = max(dp[i - 1] + nums[i], nums[i])
+
+        return max(dp)
+
+
+
+
+

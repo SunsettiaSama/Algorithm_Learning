@@ -95,3 +95,126 @@ class Solution:
         # 3. 处理边界条件：计算1~n的最大距离，若有inf（不可达）返回-1
         max_delay = max(min_distances[1:])  # 只看1~n的节点
         return max_delay if max_delay != float('inf') else -1
+    
+
+"""
+
+V1 学习中
+"""
+
+from typing import List
+class Solution:
+    def networkDelayTime(self, times: List[List[int]], n: int, k: int) -> int:
+        
+        # 邻接表构建 ✅ 这部分没问题
+        graph = {}
+        for u, v, w in times:
+            if not u in graph:
+                graph[u] = []
+            graph[u].append((v, w))
+
+        # dijkstra
+        min_distances = [float('inf')] * n
+        min_distances[k] = 0  # ERROR 1：节点是1~n，数组是0基！应该是 min_distances[k-1] = 0
+        visited = set()
+
+        # 如果有未访问完毕的节点
+        while len(visited) < n:
+            
+            curr_min_distance = float('inf')
+            curr_min_node = -1
+            # 先找到所有节点里面路径最短的
+            for i in range(n):
+                # ERROR 2：没过滤已访问节点！会重复选，死循环/结果错误
+                # 正确：if i not in visited and min_distances[i] < curr_min_distance:
+                if min_distances[i] < curr_min_distance:
+                    curr_min_distance = min_distances[i]
+                    curr_min_node = i
+            
+            # 无有效节点，润之
+            if curr_min_node == -1:
+                break
+            
+            # 标记为已访问 ✅
+            visited.add(curr_min_node)
+
+            # ERROR 3：curr_min_node 可能没有邻边，graph 无此键，直接报错！
+            # 必须先判断 if curr_min_node not in graph: continue
+            for neighbor_node, value in graph[curr_min_node]:
+                # 贪心集合，一定是对的
+                if neighbor_node in visited:
+                    continue
+
+                # ERROR 4：neighbor_node 是1基，数组是0基！要 neighbor_node - 1
+                neighbor_distance = min_distances[curr_min_node] + value
+                if min_distances[neighbor_node] > neighbor_distance:
+                    min_distances[neighbor_node] = neighbor_distance
+        
+        # ERROR 5：如果有节点不可达(max是inf)，必须返回-1，不能直接返回max
+        return max(min_distances)
+    
+
+"""
+V1 修复
+
+"""
+
+from typing import List
+class Solution:
+    def networkDelayTime(self, times: List[List[int]], n: int, k: int) -> int:
+        
+        # 邻接表构建 ✅ 这部分没问题
+        graph = {}
+        for u, v, w in times:
+            if not u in graph:
+                graph[u] = []
+            graph[u].append((v, w))
+
+        # dijkstra
+        min_distances = [float('inf')] * (n + 1)
+        min_distances[0] = 0
+        min_distances[k] = 0 
+        visited = set()
+
+        # 如果有未访问完毕的节点
+        while len(visited) < n:
+            
+            curr_min_distance = float('inf')
+            curr_min_node = -1
+            # 先找到所有节点里面路径最短的
+            for i in range(n + 1):
+                if i in visited:
+                    continue
+                # 正确：if i not in visited and min_distances[i] < curr_min_distance:
+                if min_distances[i] < curr_min_distance:
+                    curr_min_distance = min_distances[i]
+                    curr_min_node = i
+            
+            # 无有效节点，润之
+            if curr_min_node == -1:
+                break
+
+            # 标记为已访问 ✅
+            visited.add(curr_min_node)
+
+            # 节点不在邻接表里面，这代表它没有任何权边，也没有任何邻居，这是下面循环的边界条件
+            if curr_min_node not in graph: continue
+
+            for neighbor_node, value in graph[curr_min_node]:
+                # 贪心集合，一定是对的
+                if neighbor_node in visited:
+                    continue
+
+                neighbor_distance = min_distances[curr_min_node] + value
+                if min_distances[neighbor_node] > neighbor_distance:
+                    min_distances[neighbor_node] = neighbor_distance
+
+        min_dis = max(min_distances)
+        return min_dis if min_dis == float('inf') else -1
+
+
+
+
+        
+
+        

@@ -53,3 +53,23 @@ class Solution:
         dfs(root)
 
         return res
+    
+
+"""
+手搓V1
+
+"""
+class Solution:
+    def preorderTraversal(self, root: TreeNode) -> List[int]:
+
+        res = []
+
+        def dfs(node):
+            if not node:
+                return
+        
+            res.append(node)
+            dfs(node.left)
+            dfs(node.right)
+        
+        dfs(root)
