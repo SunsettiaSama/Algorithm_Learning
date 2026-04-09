@@ -12,6 +12,22 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 
+# 艾宾浩斯复习阶段：(阶段名, 天数上限, 阶段紧急度分数)
+EBBINGHAUS_STAGES = [
+    ("1d",  1,  20),
+    ("3d",  3,  40),
+    ("7d",  7,  60),
+    ("14d", 14, 80),
+    ("30d", 30, 100),
+]
+
+# 重要程度系数
+IMPORTANCE_COEF = {
+    "普通": 1.0,
+    "重点": 1.5,
+}
+
+
 class FileTracker:
     """文件追踪器 - 记录文件的元数据和状态"""
     
@@ -31,6 +47,7 @@ class FileTracker:
         self.logs_dir = self.tracker_dir / "logs"
         self.logs_dir.mkdir(parents=True, exist_ok=True)
         self.data = self._load_database()
+        self._migrate_file_data()
         self.ignored_patterns = self._load_ignore_patterns()
     
     def _load_ignore_patterns(self) -> List[str]:
@@ -187,28 +204,36 @@ venv/
             current_files[rel_path] = mtime
             
             if rel_path not in self.data["files"]:
+                now_ts = int(time.time())
                 self.data["files"][rel_path] = {
                     "path": rel_path,
                     "created_at": datetime.fromtimestamp(ctime).isoformat(),
                     "created_timestamp": int(ctime),
                     "last_modified": datetime.fromtimestamp(mtime).isoformat(),
                     "last_modified_timestamp": mtime,
-                    "first_seen_timestamp": int(time.time()),
+                    "first_seen_timestamp": now_ts,
+                    "first_study_timestamp": now_ts,
                     "update_count": 0,
-                    "update_timestamps": [int(time.time())],
+                    "update_timestamps": [now_ts],
                     "file_size": size,
                     "status": "新建",
-                    "notes": ""
+                    "notes": "",
+                    "stage_done": {s[0]: False for s in EBBINGHAUS_STAGES},
+                    "is_important": "普通",
                 }
                 new_files += 1
             else:
                 old_mtime = self.data["files"][rel_path].get("last_modified_timestamp")
                 if old_mtime is None or mtime > old_mtime:
+                    now_ts = int(time.time())
                     self.data["files"][rel_path]["last_modified"] = datetime.fromtimestamp(mtime).isoformat()
                     self.data["files"][rel_path]["last_modified_timestamp"] = mtime
                     self.data["files"][rel_path]["update_count"] += 1
-                    self.data["files"][rel_path]["update_timestamps"].append(int(time.time()))
+                    self.data["files"][rel_path]["update_timestamps"].append(now_ts)
                     self.data["files"][rel_path]["file_size"] = size
+                    # 文件修改 = 完成当前艾宾浩斯复习阶段
+                    self._mark_current_stage_done(rel_path, now_ts)
+                    self._record_review_detail(rel_path, "file_modified", "", now_ts)
                     updated_files += 1
                 if self.data["files"][rel_path]["status"] == "已删除":
                     self.data["files"][rel_path]["status"] = "新建"
@@ -268,24 +293,23 @@ venv/
     
     def record_update(self, file_path: str, notes: str = ""):
         """
-        记录文件的手动更新
-        
+        记录文件的手动更新（等价于一次复习），自动完成当前艾宾浩斯阶段。
+
         Args:
             file_path: 文件的相对路径
             notes: 更新备注
         """
-        if file_path in self.data["files"]:
-            timestamp = int(time.time())
-            self.data["files"][file_path]["update_count"] += 1
-            self.data["files"][file_path]["update_timestamps"].append(timestamp)
-            self.data["files"][file_path]["last_modified"] = datetime.now().isoformat()
-            self.data["files"][file_path]["notes"] = notes
-            
-            self._record_review_detail(file_path, "manual_update", notes, timestamp)
-            
-            self._save_database()
-            return True
-        return False
+        if file_path not in self.data["files"]:
+            return False
+        timestamp = int(time.time())
+        self.data["files"][file_path]["update_count"] += 1
+        self.data["files"][file_path]["update_timestamps"].append(timestamp)
+        self.data["files"][file_path]["last_modified"] = datetime.now().isoformat()
+        self.data["files"][file_path]["notes"] = notes
+        self._mark_current_stage_done(file_path, timestamp)
+        self._record_review_detail(file_path, "manual_update", notes, timestamp)
+        self._save_database()
+        return True
     
     def _record_review_detail(self, file_path: str, review_type: str, notes: str = "", timestamp: int = None):
         """
@@ -454,29 +478,116 @@ venv/
         
         return age_days
     
-    def get_color_level(self, age_days: float) -> str:
+    def _get_current_stage(self, days: float) -> tuple:
+        """根据距首次学习的天数返回 (当前阶段名, 阶段紧急度分数)"""
+        for stage_name, max_day, score in EBBINGHAUS_STAGES:
+            if days <= max_day:
+                return stage_name, score
+        return EBBINGHAUS_STAGES[-1][0], EBBINGHAUS_STAGES[-1][2]
+
+    def _mark_current_stage_done(self, file_path: str, timestamp: int = None) -> Optional[str]:
         """
-        根据天数确定颜色等级
-        
+        将文件当前艾宾浩斯阶段标记为已完成。
+
+        Returns:
+            被标记的阶段名；文件不存在或缺少首次学习时间时返回 None
+        """
+        if timestamp is None:
+            timestamp = int(time.time())
+        file_entry = self.data["files"].get(file_path)
+        if file_entry is None:
+            return None
+        first_study_ts = (
+            file_entry.get("first_study_timestamp") or
+            file_entry.get("first_seen_timestamp")
+        )
+        if first_study_ts is None:
+            return None
+        days = (timestamp - first_study_ts) / 86400.0
+        stage_name, _ = self._get_current_stage(days)
+        if "stage_done" not in file_entry:
+            file_entry["stage_done"] = {s[0]: False for s in EBBINGHAUS_STAGES}
+        file_entry["stage_done"][stage_name] = True
+        return stage_name
+
+    def _migrate_file_data(self):
+        """为旧格式文件补充艾宾浩斯相关字段，保持向后兼容"""
+        changed = False
+        default_stage_done = {s[0]: False for s in EBBINGHAUS_STAGES}
+        for info in self.data["files"].values():
+            if "stage_done" not in info:
+                info["stage_done"] = dict(default_stage_done)
+                changed = True
+            if "is_important" not in info:
+                info["is_important"] = "普通"
+                changed = True
+            if "first_study_timestamp" not in info:
+                info["first_study_timestamp"] = (
+                    info.get("first_seen_timestamp") or
+                    info.get("created_timestamp") or
+                    int(time.time())
+                )
+                changed = True
+        if changed:
+            self._save_database()
+
+    def mark_important(self, file_path: str, importance: str) -> bool:
+        """切换文件的重要程度标记（'普通' 或 '重点'）"""
+        if file_path not in self.data["files"]:
+            return False
+        if importance not in IMPORTANCE_COEF:
+            return False
+        self.data["files"][file_path]["is_important"] = importance
+        self._save_database()
+        return True
+
+    def compute_weight_score(self, file_path: str) -> Optional[float]:
+        """
+        基于艾宾浩斯遗忘曲线计算文件的复习权重分数（0-150）
+
+        算法：权重 = 阶段紧急度 × 重点系数
+          - 阶段已完成 → 0（当前阶段不需要复习）
+          - 阶段未完成 → stage_score × coef
+
+        阶段紧急度：1d=20, 3d=40, 7d=60, 14d=80, 30d=100
+        重点系数：普通=1.0, 重点=1.5（最高 150 分）
+        """
+        if file_path not in self.data["files"]:
+            return None
+
+        file_info = self.data["files"][file_path]
+        first_study_ts = (
+            file_info.get("first_study_timestamp") or
+            file_info.get("first_seen_timestamp")
+        )
+        if first_study_ts is None:
+            return None
+
+        days = (time.time() - first_study_ts) / 86400.0
+        stage_name, stage_score = self._get_current_stage(days)
+
+        stage_done = file_info.get("stage_done", {})
+        if stage_done.get(stage_name, False):
+            return 0.0
+
+        importance = file_info.get("is_important", "普通")
+        coef = IMPORTANCE_COEF.get(importance, 1.0)
+        return round(stage_score * coef, 2)
+
+    def get_color_level(self, weight_score: float) -> str:
+        """
+        根据权重分数确定颜色等级
+
         Returns:
             'green', 'yellow', 'red'
         """
-        if age_days < 1:
+        thresholds = self._get_score_thresholds()
+        if weight_score < thresholds.get('fresh_max', 1):
             return 'green'
-        elif age_days <= 3:
-            progress = (age_days - 1) / 2
-            if progress < 0.5:
-                return 'green'
-            else:
-                return 'yellow'
-        elif age_days <= 7:
-            return 'red'
-        elif age_days <= 14:
-            return 'red'
-        elif age_days <= 30:
-            return 'red'
+        elif weight_score < thresholds.get('normal_max', 60):
+            return 'yellow'
         else:
-            return 'green'
+            return 'red'
     
     def get_review_color(self, file_path: str) -> str:
         """
@@ -519,37 +630,32 @@ venv/
     
     def get_color_segment(self, file_path: str) -> str:
         """
-        获取颜色分段（用于UI显示）
-        
-        仅基于时间判定：
-        - 'fresh': 白色 - 0-1天内（不需要复习）
-        - 'early': 浅黄 - 1-3天内（需要复习）
-        - 'normal': 橙色 - 3-7天内（重点复习）
-        - 'warning': 番茄红 - 7-14天内（警告级）
-        - 'critical': 深红 - 14-30天内（紧急复习）
-        - 'overdue': 暗红 - 30+天未更新（已遗忘）
+        根据权重分数获取颜色分段（用于UI显示）
+
+        - 'fresh':    白色 - 分数 < fresh_max（不需要复习）
+        - 'early':    浅黄 - 分数 < early_max（需要复习）
+        - 'normal':   橙色 - 分数 < normal_max（重点复习）
+        - 'warning':  番茄红 - 分数 < warning_max（警告级）
+        - 'critical': 深红 - 分数 < critical_max（紧急复习）
+        - 'overdue':  暗红 - 分数 >= critical_max（已遗忘）
         """
-        from ..config.settings import StudySettings
-        settings = StudySettings()
-        intervals = settings.get_time_intervals()
-        
         if file_path not in self.data["files"]:
             return 'fresh'
-        
-        age_days = self.get_file_age_days(file_path)
-        
-        if age_days is None:
+
+        score = self.compute_weight_score(file_path)
+        if score is None:
             return 'fresh'
-        
-        if age_days < intervals.get('fresh_days', 1):
+
+        thresholds = self._get_score_thresholds()
+        if score < thresholds.get('fresh_max', 1):
             return 'fresh'
-        elif age_days < intervals.get('early_days', 3):
+        elif score < thresholds.get('early_max', 40):
             return 'early'
-        elif age_days < intervals.get('normal_days', 7):
+        elif score < thresholds.get('normal_max', 60):
             return 'normal'
-        elif age_days < intervals.get('warning_days', 14):
+        elif score < thresholds.get('warning_max', 80):
             return 'warning'
-        elif age_days < intervals.get('critical_days', 30):
+        elif score < thresholds.get('critical_max', 100):
             return 'critical'
         else:
             return 'overdue'
@@ -560,105 +666,112 @@ venv/
         for rel_path, info in self.data["files"].items():
             if info["status"] != "已删除":
                 age_days = self.get_file_age_days(rel_path)
-                color = self.get_color_level(age_days) if age_days else 'gray'
-                
+                weight_score = self.compute_weight_score(rel_path)
+                color = self.get_color_level(weight_score) if weight_score is not None else 'gray'
+
                 files.append({
                     "path": rel_path,
                     **info,
                     "age_days": age_days,
+                    "weight_score": weight_score,
                     "color": color
                 })
-        
+
         files.sort(key=lambda x: x.get("update_timestamps", [0])[-1], reverse=True)
         return files
     
     def get_urgent_files(self) -> List[Dict]:
-        """获取需要紧急复习的文件（3-30天内未更新）"""
+        """获取需要复习的文件（当前艾宾浩斯阶段未完成，即权重分数 > 0），按分数降序排列"""
         urgent = []
         for file_info in self.get_file_list():
-            age_days = file_info.get("age_days")
-            if age_days is not None and 3 <= age_days <= 30:
+            score = file_info.get("weight_score")
+            if score is not None and score > 0:
                 urgent.append(file_info)
-        
-        return sorted(urgent, key=lambda x: x.get("age_days", 0), reverse=True)
+        return sorted(urgent, key=lambda x: x.get("weight_score", 0), reverse=True)
     
     def get_statistics(self) -> Dict:
         """获取统计信息"""
         all_files = list(self.data["files"].values())
         active_files = [f for f in all_files if f["status"] != "已删除"]
-        
+
         if not active_files:
             return {
                 "total_files": 0,
                 "active_files": 0,
                 "recent_updates": 0,
                 "urgent_count": 0,
-                "by_age_range": {}
+                "by_score_range": {}
             }
-        
-        age_ranges = {
-            "0_1days": 0,
-            "1_3days": 0,
-            "3_7days": 0,
-            "7_14days": 0,
-            "14_30days": 0,
-            "30+days": 0
+
+        thresholds = self._get_score_thresholds()
+        fresh_max = thresholds.get('fresh_max', 0.2)
+        early_max = thresholds.get('early_max', 0.4)
+        normal_max = thresholds.get('normal_max', 0.6)
+        warning_max = thresholds.get('warning_max', 0.8)
+        critical_max = thresholds.get('critical_max', 1.0)
+
+        score_ranges = {
+            "fresh": 0,
+            "early": 0,
+            "normal": 0,
+            "warning": 0,
+            "critical": 0,
+            "overdue": 0
         }
-        
+
         recent_updates = 0
         urgent_count = 0
-        now = time.time()
-        
+
         for f in active_files:
-            age_days = self.get_file_age_days(f["path"])
-            if age_days is None:
+            score = self.compute_weight_score(f["path"])
+            if score is None:
                 continue
-            
-            if age_days <= 1:
-                age_ranges["0_1days"] += 1
+
+            if score < fresh_max:
+                score_ranges["fresh"] += 1
                 recent_updates += 1
-            elif age_days <= 3:
-                age_ranges["1_3days"] += 1
-            elif age_days <= 7:
-                age_ranges["3_7days"] += 1
+            elif score < early_max:
+                score_ranges["early"] += 1
+            elif score < normal_max:
+                score_ranges["normal"] += 1
                 urgent_count += 1
-            elif age_days <= 14:
-                age_ranges["7_14days"] += 1
+            elif score < warning_max:
+                score_ranges["warning"] += 1
                 urgent_count += 1
-            elif age_days <= 30:
-                age_ranges["14_30days"] += 1
+            elif score < critical_max:
+                score_ranges["critical"] += 1
                 urgent_count += 1
             else:
-                age_ranges["30+days"] += 1
-        
+                score_ranges["overdue"] += 1
+
         return {
             "total_files": len(all_files),
             "active_files": len(active_files),
             "recent_updates": recent_updates,
             "urgent_count": urgent_count,
-            "by_age_range": age_ranges
+            "by_score_range": score_ranges
         }
     
     def get_directory_urgency(self, dir_path: str = "") -> Dict[str, Dict]:
         """
         计算目录的紧急度指标（用于目录着色）
-        
+
         返回格式：
         {
             "dir_path": {
-                "urgency_score": 0.0-1.0,  # 归一化后的紧急度分数
-                "urgency_level": "critical|warning|normal|early|fresh",  # 紧急级别
-                "critical_count": 0,  # 紧急复习的文件数
-                "warning_count": 0,   # 警告级的文件数
-                "total_files": 0      # 总文件数
+                "urgency_score": 0.0-1.0,
+                "urgency_level": "critical|warning|normal|early|fresh",
+                "critical_count": 0,
+                "warning_count": 0,
+                "total_files": 0
             }
         }
         """
-        intervals = self._get_time_intervals()
+        thresholds = self._get_score_thresholds()
         all_files = self.get_file_list()
-        
+
         dir_urgencies = {}
-        
+
         if not dir_path:
             dir_dict = {}
             for file_info in all_files:
@@ -668,57 +781,57 @@ venv/
                     if dir_name not in dir_dict:
                         dir_dict[dir_name] = []
                     dir_dict[dir_name].append(file_info)
-            
+
             for dir_name, files in dir_dict.items():
-                urgency_info = self._calculate_dir_urgency(files, intervals)
+                urgency_info = self._calculate_dir_urgency(files, thresholds)
                 dir_urgencies[dir_name] = urgency_info
         else:
             matching_files = [f for f in all_files if f['path'].startswith(dir_path)]
             if matching_files:
-                urgency_info = self._calculate_dir_urgency(matching_files, intervals)
+                urgency_info = self._calculate_dir_urgency(matching_files, thresholds)
                 dir_urgencies[dir_path] = urgency_info
-        
+
         return dir_urgencies
-    
+
     def get_nested_directory_urgency(self, dir_dict: Dict[str, any], dir_path: str = "") -> Dict[str, Dict]:
         """
         递归计算嵌套目录结构中的紧急度
-        
+
         Args:
             dir_dict: 嵌套的目录字典结构
             dir_path: 当前目录路径前缀
-        
+
         Returns:
             Dict: 包含所有目录紧急度的字典
         """
-        intervals = self._get_time_intervals()
+        thresholds = self._get_score_thresholds()
         urgencies = {}
-        
+
         for key, subdict in dir_dict.items():
             if key == '__files__':
                 continue
-            
+
             full_path = f"{dir_path}/{key}" if dir_path else key
-            
+
             files = subdict.get('__files__', [])
-            
+
             if files:
-                urgency_info = self._calculate_dir_urgency(files, intervals)
+                urgency_info = self._calculate_dir_urgency(files, thresholds)
                 urgencies[full_path] = urgency_info
-            
+
             nested_urgencies = self.get_nested_directory_urgency(subdict, full_path)
             urgencies.update(nested_urgencies)
-        
+
         return urgencies
-    
-    def _calculate_dir_urgency(self, files: List[Dict], intervals: Dict) -> Dict:
+
+    def _calculate_dir_urgency(self, files: List[Dict], thresholds: Dict) -> Dict:
         """
-        根据子文件的紧急度计算目录的紧急度
-        
+        根据子文件的权重分数计算目录的紧急度
+
         权重计算：
-        - 紧急复习（critical）: 权重=1.0
-        - 警告级（warning）: 权重=0.5
-        - 其他（normal/early/fresh）: 权重=0
+        - 分数 >= warning_max（critical 级）: 权重=1.0
+        - 分数 >= normal_max（warning 级）: 权重=0.5
+        - 其他: 权重=0
         """
         if not files:
             return {
@@ -729,23 +842,26 @@ venv/
                 "normal_count": 0,
                 "total_files": 0
             }
-        
+
+        warning_max = thresholds.get('warning_max', 80)
+        normal_max = thresholds.get('normal_max', 60)
+
         critical_count = 0
         warning_count = 0
         normal_count = 0
-        
+
         for file_info in files:
-            age_days = file_info.get('age_days')
-            if age_days is None:
+            score = file_info.get('weight_score')
+            if score is None:
                 continue
-            
-            if age_days >= intervals.get('warning_days', 14):
+
+            if score >= warning_max:
                 critical_count += 1
-            elif age_days >= intervals.get('normal_days', 7):
+            elif score >= normal_max:
                 warning_count += 1
             else:
                 normal_count += 1
-        
+
         total = len(files)
         if total == 0:
             return {
@@ -756,9 +872,9 @@ venv/
                 "normal_count": 0,
                 "total_files": 0
             }
-        
+
         weighted_score = (critical_count * 1.0 + warning_count * 0.5) / total
-        
+
         if weighted_score >= 0.7:
             urgency_level = "critical"
         elif weighted_score >= 0.4:
@@ -769,7 +885,7 @@ venv/
             urgency_level = "early"
         else:
             urgency_level = "fresh"
-        
+
         return {
             "urgency_score": min(1.0, weighted_score),
             "urgency_level": urgency_level,
@@ -778,18 +894,18 @@ venv/
             "normal_count": normal_count,
             "total_files": total
         }
-    
-    def _get_time_intervals(self) -> Dict:
-        """获取时间间隔配置，使用默认值如果未设置"""
+
+    def _get_score_thresholds(self) -> Dict:
+        """获取权重分数区间配置（艾宾浩斯模式，0-150 量程），不可用时返回默认值"""
         from ..config.settings import StudySettings
         try:
             settings = StudySettings()
-            return settings.get_time_intervals()
+            return settings.get_score_thresholds()
         except:
             return {
-                "fresh_days": 1,
-                "early_days": 3,
-                "normal_days": 7,
-                "warning_days": 14,
-                "critical_days": 30
+                "fresh_max": 1,
+                "early_max": 40,
+                "normal_max": 60,
+                "warning_max": 80,
+                "critical_max": 100,
             }

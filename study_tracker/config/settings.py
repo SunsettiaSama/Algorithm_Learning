@@ -50,7 +50,15 @@ class StudySettings:
                 "normal_days": 7,
                 "warning_days": 14,
                 "critical_days": 30,
-                "description": "复习时间区间配置（天数）"
+                "description": "复习时间区间配置（天数）—— 已由 score_thresholds 接管底层逻辑，此项仅作参考保留"
+            },
+            "score_thresholds": {
+                "fresh_max": 1,
+                "early_max": 40,
+                "normal_max": 60,
+                "warning_max": 80,
+                "critical_max": 100,
+                "description": "艾宾浩斯权重分数区间（0-150）：0=当前阶段已完成，>0 表示需复习"
             },
             "color_mapping": {
                 "fresh": {
@@ -264,6 +272,43 @@ class StudySettings:
             "fallback_family": "Arial"
         })
     
+    def get_score_thresholds(self) -> Dict[str, float]:
+        """获取权重分数区间配置（艾宾浩斯模式，0-150 量程）"""
+        defaults = {
+            "fresh_max": 1,
+            "early_max": 40,
+            "normal_max": 60,
+            "warning_max": 80,
+            "critical_max": 100,
+        }
+        thresholds = self.data.get("score_thresholds", defaults)
+        # 兼容旧版 0.0-1.0 量程：自动返回新默认值
+        if thresholds.get("fresh_max", 0) < 2:
+            return defaults
+        return thresholds
+
+    def set_score_thresholds(self, fresh_max: float, early_max: float, normal_max: float,
+                             warning_max: float, critical_max: float) -> bool:
+        """
+        设置权重分数区间配置
+
+        Args:
+            fresh_max: 不需要复习的分数上限
+            early_max: 早期复习的分数上限
+            normal_max: 重点复习的分数上限
+            warning_max: 警告级的分数上限
+            critical_max: 紧急复习的分数上限（超过此值视为 overdue）
+        """
+        if "score_thresholds" not in self.data:
+            self.data["score_thresholds"] = {}
+        self.data["score_thresholds"]["fresh_max"] = fresh_max
+        self.data["score_thresholds"]["early_max"] = early_max
+        self.data["score_thresholds"]["normal_max"] = normal_max
+        self.data["score_thresholds"]["warning_max"] = warning_max
+        self.data["score_thresholds"]["critical_max"] = critical_max
+        self._save_settings()
+        return True
+
     def get_time_intervals(self) -> Dict[str, int]:
         """获取时间区间配置"""
         return self.data.get("time_intervals", {

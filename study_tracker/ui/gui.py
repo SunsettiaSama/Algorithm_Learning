@@ -14,8 +14,7 @@ import subprocess
 import os
 import platform
 from datetime import datetime
-from ..tracker.file_tracker import FileTracker
-from .study_log_window import StudyLogWindow
+from ..tracker.file_tracker import FileTracker, EBBINGHAUS_STAGES, IMPORTANCE_COEF
 
 
 class StudyTrackerGUI:
@@ -55,7 +54,6 @@ class StudyTrackerGUI:
         ttk.Button(control_frame, text="扫描目录", command=self._scan_directory).pack(side=tk.LEFT, padx=5)
         ttk.Button(control_frame, text="刷新数据", command=self._refresh_data).pack(side=tk.LEFT, padx=5)
         ttk.Button(control_frame, text="导出报告", command=self._export_report).pack(side=tk.LEFT, padx=5)
-        ttk.Button(control_frame, text="学习日志", command=self._open_study_log).pack(side=tk.LEFT, padx=5)
         ttk.Button(control_frame, text="紧急复习", command=self._show_urgent_files).pack(side=tk.LEFT, padx=5)
         ttk.Button(control_frame, text="设置", command=self._open_settings).pack(side=tk.LEFT, padx=5)
         
@@ -70,15 +68,15 @@ class StudyTrackerGUI:
         
         from ..config.settings import StudySettings
         settings = StudySettings()
-        intervals = settings.get_time_intervals()
-        
+        thresholds = settings.get_score_thresholds()
+
         color_text = (
-            f"白色: 0-{intervals['fresh_days']}天 不需要复习 | "
-            f"浅黄: {intervals['fresh_days']}-{intervals['early_days']}天 需要复习 | "
-            f"橙色: {intervals['early_days']}-{intervals['normal_days']}天 重点复习 | "
-            f"红色: {intervals['normal_days']}-{intervals['warning_days']}天 警告级 | "
-            f"深红: {intervals['warning_days']}-{intervals['critical_days']}天 紧急复习 | "
-            f"暗红: {intervals['critical_days']}+天 已遗忘"
+            f"白色: 分数<{thresholds['fresh_max']} 不需要复习 | "
+            f"浅黄: {thresholds['fresh_max']}-{thresholds['early_max']} 需要复习 | "
+            f"橙色: {thresholds['early_max']}-{thresholds['normal_max']} 重点复习 | "
+            f"红色: {thresholds['normal_max']}-{thresholds['warning_max']} 警告级 | "
+            f"深红: {thresholds['warning_max']}-{thresholds['critical_max']} 紧急复习 | "
+            f"暗红: >={thresholds['critical_max']} 已遗忘"
         )
         ttk.Label(color_info_frame, text=color_text, font=("Arial", 8)).pack(anchor=tk.W, padx=10, pady=5)
         
@@ -99,21 +97,23 @@ class StudyTrackerGUI:
         
         self.tree = ttk.Treeview(
             list_frame,
-            columns=("age", "updates", "status"),
+            columns=("importance", "age", "updates", "status"),
             height=20,
             yscrollcommand=tree_scroll.set
         )
         tree_scroll.config(command=self.tree.yview)
-        
+
         self.tree.heading('#0', text='文件名')
-        self.tree.heading('age', text='天数')
+        self.tree.heading('importance', text='重要')
+        self.tree.heading('age', text='权重')
         self.tree.heading('updates', text='更新次数')
         self.tree.heading('status', text='状态')
-        
-        self.tree.column('#0', width=400)
-        self.tree.column('age', width=80)
-        self.tree.column('updates', width=80)
-        self.tree.column('status', width=100)
+
+        self.tree.column('#0', width=340)
+        self.tree.column('importance', width=46, anchor='center')
+        self.tree.column('age', width=64)
+        self.tree.column('updates', width=68)
+        self.tree.column('status', width=80)
         
         self.tree.pack(fill=tk.BOTH, expand=True)
         self.tree.bind('<Double-1>', self._on_tree_double_click)
@@ -122,49 +122,81 @@ class StudyTrackerGUI:
         
         right_main_frame = ttk.Frame(self.window)
         right_main_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
-        activity_frame = ttk.LabelFrame(right_main_frame, text="学习动态")
-        activity_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-        
-        self.activity_frame = activity_frame
-        self.activity_text = tk.Text(activity_frame, width=35, wrap=tk.WORD)
-        self.activity_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        self.activity_text.config(state=tk.DISABLED)
-        
-        detail_container = ttk.Frame(activity_frame)
-        self.detail_container = detail_container
-        
-        detail_scroll = ttk.Scrollbar(detail_container)
+
+        # ── 上半区：推荐复习 Top 10（始终固定显示）──
+        urgency_frame = ttk.LabelFrame(right_main_frame, text="复习推荐 Top 10")
+        urgency_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 5))
+
+        urgency_scroll = ttk.Scrollbar(urgency_frame)
+        urgency_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.urgency_tree = ttk.Treeview(
+            urgency_frame,
+            columns=("score", "importance", "stage"),
+            height=10,
+            yscrollcommand=urgency_scroll.set,
+            show="headings tree"
+        )
+        urgency_scroll.config(command=self.urgency_tree.yview)
+
+        self.urgency_tree.heading('#0', text='文件')
+        self.urgency_tree.heading('score', text='权重')
+        self.urgency_tree.heading('importance', text='重要')
+        self.urgency_tree.heading('stage', text='阶段')
+
+        self.urgency_tree.column('#0', width=230)
+        self.urgency_tree.column('score', width=55, anchor='center')
+        self.urgency_tree.column('importance', width=46, anchor='center')
+        self.urgency_tree.column('stage', width=46, anchor='center')
+
+        self.urgency_tree.pack(fill=tk.X)
+        self.urgency_tree.bind('<Button-1>', self._on_urgency_click)
+        self.urgency_tree.bind('<Double-1>', self._on_urgency_double_click)
+
+        # ── 下半区：文件元数据详情（始终可见，选中文件后更新内容）──
+        detail_panel = ttk.LabelFrame(right_main_frame, text="文件详情")
+        detail_panel.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.detail_panel = detail_panel
+
+        self.detail_placeholder = ttk.Label(
+            detail_panel,
+            text="← 点击左侧文件或上方推荐列表查看详细信息",
+            font=("Arial", 9), foreground="gray"
+        )
+        self.detail_placeholder.pack(expand=True)
+
+        detail_content_frame = ttk.Frame(detail_panel)
+        self.detail_content_frame = detail_content_frame
+
+        detail_scroll = ttk.Scrollbar(detail_content_frame)
         detail_scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        
-        self.detail_text = tk.Text(detail_container, width=35, wrap=tk.WORD, yscrollcommand=detail_scroll.set)
-        self.detail_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5, side=tk.LEFT)
-        self.detail_text.config(state=tk.DISABLED)
+
+        self.detail_text = tk.Text(
+            detail_content_frame, width=40, wrap=tk.WORD,
+            yscrollcommand=detail_scroll.set, state=tk.DISABLED
+        )
+        self.detail_text.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
         detail_scroll.config(command=self.detail_text.yview)
-        
-        button_frame = ttk.Frame(activity_frame)
+
+        button_frame = ttk.Frame(detail_panel)
         self.button_frame = button_frame
-        
-        ttk.Button(button_frame, text="标记为已学", command=self._mark_studied).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="标记为已掌握", command=self._mark_mastered).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="更新", command=self._update_file).pack(side=tk.LEFT, padx=5)
-        ttk.Button(button_frame, text="返回动态", command=self._show_activity_list).pack(side=tk.LEFT, padx=5)
-        
-        notes_frame = ttk.LabelFrame(activity_frame, text="笔记", padding=5)
+
+        ttk.Button(button_frame, text="标记为已学", command=self._mark_studied).pack(side=tk.LEFT, padx=4)
+        ttk.Button(button_frame, text="标记为已掌握", command=self._mark_mastered).pack(side=tk.LEFT, padx=4)
+        ttk.Button(button_frame, text="更新", command=self._update_file).pack(side=tk.LEFT, padx=4)
+        ttk.Button(button_frame, text="切换重要程度", command=self._toggle_importance).pack(side=tk.LEFT, padx=4)
+        ttk.Button(button_frame, text="清除选择", command=self._clear_detail_view).pack(side=tk.LEFT, padx=4)
+
+        notes_frame = ttk.LabelFrame(detail_panel, text="笔记", padding=5)
         self.notes_frame = notes_frame
-        
-        self.notes_text = tk.Text(notes_frame, width=35, height=6, wrap=tk.WORD)
+
+        self.notes_text = tk.Text(notes_frame, width=40, height=4, wrap=tk.WORD)
         self.notes_text.pack(fill=tk.BOTH, expand=True, pady=5)
-        
+
         ttk.Button(notes_frame, text="保存笔记", command=self._save_notes).pack(side=tk.RIGHT, padx=5, pady=5)
-        
-        log_frame = ttk.LabelFrame(right_main_frame, text="学习日记")
-        log_frame.pack(fill=tk.BOTH, expand=False, padx=0, pady=(10, 0))
-        
-        self.log_text = tk.Text(log_frame, width=35, height=8, wrap=tk.WORD)
-        self.log_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        self.log_text.config(state=tk.DISABLED)
-        
+
+        self._urgency_file_map: Dict[str, str] = {}
+        self._tree_file_map: Dict[str, str] = {}
         self.current_file = None
         self.in_detail_view = False
     
@@ -207,6 +239,8 @@ class StudyTrackerGUI:
         self.stats_var.set(stats_text)
         
         self._update_file_list()
+        if not self.in_detail_view:
+            self._update_urgency_list()
         self._check_reminders()
     
     def _calc_percentage(self, count: int, total: int) -> str:
@@ -219,86 +253,78 @@ class StudyTrackerGUI:
         """更新文件列表显示"""
         for item in self.tree.get_children():
             self.tree.delete(item)
-        
+        self._tree_file_map.clear()
+
         files = self.tracker.get_file_list()
         search_term = self.search_var.get().lower()
-        
-        # 构建嵌套的目录树结构
+
         dir_tree = {}
         for file_info in files:
             path = file_info['path']
             if search_term and search_term not in path.lower():
                 continue
-            
+
             parts = Path(path).parts
             if not parts:
                 continue
-            
+
             current_level = dir_tree
             for part in parts[:-1]:
                 if part not in current_level:
                     current_level[part] = {}
                 current_level = current_level[part]
-            
+
             if '__files__' not in current_level:
                 current_level['__files__'] = []
             current_level['__files__'].append(file_info)
-        
-        # 获取所有嵌套目录的紧急度信息
+
         dir_urgencies = self.tracker.get_nested_directory_urgency(dir_tree)
-        
-        # 递归插入树形结构 - 按紧急度排序（所有层级）
-        def insert_tree_items(parent_id, dir_dict, dir_path='', is_top_level=False):
+
+        def insert_tree_items(parent_id, dir_dict, dir_path=''):
             dirs_with_urgency = []
-            
             for key in dir_dict.keys():
                 if key == '__files__':
                     continue
-                
                 full_path = f"{dir_path}/{key}" if dir_path else key
                 urgency_info = dir_urgencies.get(full_path, {
-                    "urgency_score": 0.0,
-                    "urgency_level": "fresh"
+                    "urgency_score": 0.0, "urgency_level": "fresh"
                 })
                 dirs_with_urgency.append((key, dir_dict[key], urgency_info, full_path))
-            
-            sorted_dirs = sorted(dirs_with_urgency, 
-                               key=lambda x: x[2].get('urgency_score', 0.0), 
-                               reverse=True)
-            
-            for key, subdir, urgency_info, full_path in sorted_dirs:
-                dir_id = self.tree.insert(parent_id, 'end', text=key, open=False)
-                
-                urgency_level = urgency_info.get('urgency_level', 'fresh')
-                tag_name = f"dir_urgency_{urgency_level}"
-                self.tree.item(dir_id, tags=(tag_name,))
-                
-                insert_tree_items(dir_id, subdir, full_path, is_top_level=False)
-            
+
+            for key, subdir, urgency_info, full_path in sorted(
+                dirs_with_urgency, key=lambda x: x[2].get('urgency_score', 0.0), reverse=True
+            ):
+                dir_id = self.tree.insert(parent_id, 'end', text=key, open=False,
+                                          values=('', '', '', ''))
+                self.tree.item(dir_id, tags=(f"dir_urgency_{urgency_info.get('urgency_level', 'fresh')}",))
+                insert_tree_items(dir_id, subdir, full_path)
+
             if '__files__' in dir_dict:
-                sorted_files = sorted(dir_dict['__files__'], 
-                                    key=lambda x: x.get('age_days', 0), 
-                                    reverse=True)
-                
+                # 按权重分数降序排列（越高越紧急，排在前面）
+                sorted_files = sorted(
+                    dir_dict['__files__'],
+                    key=lambda x: x.get('weight_score') or 0,
+                    reverse=True
+                )
                 for file_info in sorted_files:
-                    age_days = file_info.get('age_days')
-                    age_text = f"{age_days:.1f}" if age_days is not None else "N/A"
-                    
+                    path = file_info['path']
+                    weight_score = file_info.get('weight_score')
+                    score_text = f"{weight_score:.0f}" if weight_score is not None else "N/A"
+                    importance = file_info.get('is_important', '普通')
+                    importance_star = '★' if importance == '重点' else '☆'
+
                     item_id = self.tree.insert(
                         parent_id, 'end',
-                        text=Path(file_info['path']).name,
-                        values=(
-                            age_text,
-                            file_info.get('update_count', 0),
-                            file_info.get('status', '')
-                        )
+                        text=Path(path).name,
+                        values=(importance_star, score_text,
+                                file_info.get('update_count', 0),
+                                file_info.get('status', ''))
                     )
-                    
-                    segment = self.tracker.get_color_segment(file_info['path'])
-                    tag_name = f"segment_{segment}"
-                    self.tree.item(item_id, tags=(tag_name,))
-        
-        insert_tree_items('', dir_tree, '', is_top_level=True)
+                    self._tree_file_map[item_id] = path
+                    segment = self.tracker.get_color_segment(path)
+                    self.tree.item(item_id, tags=(f"segment_{segment}",))
+
+        insert_tree_items('', dir_tree)
         self._configure_color_tags()
     
     def _configure_color_tags(self):
@@ -356,8 +382,16 @@ class StudyTrackerGUI:
                                background=dir_color_mapping['critical']['background'],
                                foreground=dir_color_mapping['critical']['foreground'],
                                font=(font_family, 10, 'bold'))
-        
-        self._show_activity_list()
+
+        for seg, cfg in color_mapping.items():
+            self.urgency_tree.tag_configure(
+                f"segment_{seg}",
+                background=cfg['background'],
+                foreground=cfg['foreground'],
+                font=(font_family, 9)
+            )
+
+        self._update_urgency_list()
     
     def _get_available_font(self, font_config: Dict) -> str:
         """获取系统可用的字体"""
@@ -372,211 +406,260 @@ class StudyTrackerGUI:
                 return font_name
         
         return font_config.get('fallback_family', 'Arial')
-        
-        self._show_activity_list()
     
     def _on_search(self, *args):
         """搜索事件"""
         self._update_file_list()
     
-    def _show_activity_list(self):
-        """显示学习动态列表"""
+    def _show_urgency_list(self):
+        """兼容旧调用 → 转发到 _clear_detail_view"""
+        self._clear_detail_view()
+
+    def _clear_detail_view(self):
+        """清除文件选中状态，详情区恢复占位提示"""
         self.in_detail_view = False
-        
-        self.detail_container.pack_forget()
+        self.current_file = None
+        self.detail_content_frame.pack_forget()
         self.button_frame.pack_forget()
         self.notes_frame.pack_forget()
-        
-        self.activity_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
-        self.activity_text.config(state=tk.NORMAL)
-        self.activity_text.delete('1.0', tk.END)
-        
-        files = self.tracker.get_file_list()
-        if not files:
-            self.activity_text.insert(tk.END, "暂无文件更新")
-            self.activity_text.config(state=tk.DISABLED)
-            self._refresh_logs()
+        self.detail_placeholder.pack(expand=True)
+
+    def _update_urgency_list(self):
+        """刷新紧急复习推荐列表（Top 10，按权重分数降序）"""
+        for item in self.urgency_tree.get_children():
+            self.urgency_tree.delete(item)
+        self._urgency_file_map.clear()
+
+        import time as _time
+
+        urgent_files = self.tracker.get_urgent_files()[:10]
+
+        if not urgent_files:
+            self.urgency_tree.insert('', 'end', text='🎉 暂无需要复习的文件', values=('', '', ''))
             return
-        
-        activity_text = "【最近更新】\n"
-        activity_text += "=" * 40 + "\n\n"
-        
-        recent_files = files[:10]
-        
-        for file_info in recent_files:
+
+        rank_icons = {1: '🥇', 2: '🥈', 3: '🥉'}
+        for rank, file_info in enumerate(urgent_files, 1):
             path = file_info['path']
-            status = file_info.get('status', '新建')
-            age_days = file_info.get('age_days', 0)
-            update_count = file_info.get('update_count', 0)
-            
-            activity_text += f"📄 {Path(path).name}\n"
-            activity_text += f"   路径: {path}\n"
-            activity_text += f"   状态: {status}\n"
-            activity_text += f"   更新: {update_count}次 | 距今: {age_days:.1f}天\n"
-            activity_text += "-" * 40 + "\n\n"
-        
-        self.activity_text.insert(tk.END, activity_text)
-        self.activity_text.config(state=tk.DISABLED)
-        
-        self._refresh_logs()
+            file_name = Path(path).name
+            score = file_info.get('weight_score') or 0
+            importance = file_info.get('is_important', '普通')
+            importance_star = '★' if importance == '重点' else '☆'
+
+            db_info = self.tracker.data["files"].get(path, {})
+            first_study_ts = db_info.get("first_study_timestamp") or db_info.get("first_seen_timestamp")
+            if first_study_ts:
+                days = (_time.time() - first_study_ts) / 86400.0
+                stage_name = EBBINGHAUS_STAGES[-1][0]
+                for s_name, s_max, _ in EBBINGHAUS_STAGES:
+                    if days <= s_max:
+                        stage_name = s_name
+                        break
+            else:
+                stage_name = '?'
+
+            icon = rank_icons.get(rank, f'{rank}.')
+            item_id = self.urgency_tree.insert(
+                '', 'end',
+                text=f"{icon} {file_name}",
+                values=(f"{score:.0f}", importance_star, stage_name)
+            )
+            self._urgency_file_map[item_id] = path
+            segment = self.tracker.get_color_segment(path)
+            self.urgency_tree.item(item_id, tags=(f"segment_{segment}",))
+
+    def _on_urgency_click(self, event):
+        """点击推荐列表 - 显示文件详情"""
+        item = self.urgency_tree.identify_row(event.y)
+        if not item or item not in self._urgency_file_map:
+            return
+        self._show_file_detail_view(self._urgency_file_map[item])
+
+    def _on_urgency_double_click(self, event):
+        """双击推荐列表 - 直接打开文件"""
+        item = self.urgency_tree.identify_row(event.y)
+        if not item or item not in self._urgency_file_map:
+            return
+        file_path = self._urgency_file_map[item]
+        full_path = self.root_dir / file_path
+        if not full_path.exists():
+            messagebox.showerror("错误", "文件不存在")
+            return
+        if platform.system() == 'Windows':
+            os.startfile(str(full_path))
+        elif platform.system() == 'Darwin':
+            subprocess.Popen(['open', str(full_path)])
+        else:
+            subprocess.Popen(['xdg-open', str(full_path)])
     
     def _on_tree_click(self, event):
-        """树形项目单击事件 - 显示文件详情"""
-        item = self.tree.selection()
+        """树形项目单击事件：点击重要列 → 切换；点击其他列 → 显示详情"""
+        col = self.tree.identify_column(event.x)
+        item = self.tree.identify_row(event.y)
         if not item:
             return
-        
-        selected_item = item[0]
-        parent = self.tree.parent(selected_item)
-        
-        if not parent:
+
+        # 点击重要程度列（#1）直接切换
+        if col == '#1':
+            file_path = self._tree_file_map.get(item)
+            if file_path:
+                self._toggle_importance_for(file_path)
             return
-        
-        item_text = self.tree.item(selected_item, 'text')
-        parent_text = self.tree.item(parent, 'text')
-        
-        for file_info in self.tracker.get_file_list():
-            file_name = Path(file_info['path']).name
-            if file_name == item_text:
-                self._show_file_detail_view(file_info['path'])
-                return
+
+        selected = self.tree.selection()
+        if not selected:
+            return
+        selected_item = selected[0]
+        file_path = self._tree_file_map.get(selected_item)
+        if file_path:
+            self._show_file_detail_view(file_path)
     
     def _show_file_detail_view(self, file_path: str):
-        """显示文件详情视图"""
+        """在下半区详情面板中显示文件的完整元数据"""
         if file_path not in self.tracker.data["files"]:
             return
-        
-        self.in_detail_view = True
+
         self.current_file = file_path
-        
-        self.activity_text.pack_forget()
-        self.detail_container.pack(fill=tk.BOTH, expand=True)
-        self.button_frame.pack(fill=tk.X, pady=5, padx=5)
+        self.in_detail_view = True
+
+        # 切换占位文字 → 详情内容
+        self.detail_placeholder.pack_forget()
+        self.detail_content_frame.pack(fill=tk.BOTH, expand=True)
+        self.button_frame.pack(fill=tk.X, pady=3, padx=5)
         self.notes_frame.pack(fill=tk.BOTH, expand=False)
-        
+
         file_info = self.tracker.data["files"][file_path]
-        age_days = self.tracker.get_file_age_days(file_path)
+        weight_score = self.tracker.compute_weight_score(file_path)
         color_segment = self.tracker.get_color_segment(file_path)
-        
+
         self.detail_text.config(state=tk.NORMAL)
         self.detail_text.delete('1.0', tk.END)
         self.notes_text.config(state=tk.NORMAL)
         self.notes_text.delete('1.0', tk.END)
-        
-        from ..config.settings import StudySettings
-        settings = StudySettings()
-        intervals = settings.get_time_intervals()
-        
-        segment_display = {
-            'fresh': f'白色 - 0-{intervals["fresh_days"]}天 不需要复习',
-            'early': f'浅黄 - {intervals["fresh_days"]}-{intervals["early_days"]}天 需要复习',
-            'normal': f'橙色 - {intervals["early_days"]}-{intervals["normal_days"]}天 重点复习',
-            'warning': f'番茄红 - {intervals["normal_days"]}-{intervals["warning_days"]}天 警告级',
-            'critical': f'深红 - {intervals["warning_days"]}-{intervals["critical_days"]}天 紧急复习',
-            'overdue': f'暗红 - {intervals["critical_days"]}+天 已遗忘'
+
+        import time as _time
+
+        # ── 时间信息 ──
+        first_study_ts = file_info.get("first_study_timestamp") or file_info.get("first_seen_timestamp")
+        first_study_str = "N/A"
+        days_since_first = None
+        if first_study_ts:
+            first_study_str = datetime.fromtimestamp(first_study_ts).strftime("%Y-%m-%d %H:%M:%S")
+            days_since_first = (_time.time() - first_study_ts) / 86400.0
+
+        last_mod_ts = file_info.get("last_modified_timestamp")
+        last_mod_str = file_info.get("last_modified", "N/A")
+        days_since_mod = None
+        if last_mod_ts:
+            days_since_mod = (_time.time() - last_mod_ts) / 86400.0
+
+        created_str = file_info.get("created_at", "N/A")
+
+        # ── 艾宾浩斯当前阶段 ──
+        stage_done = file_info.get("stage_done", {})
+        importance = file_info.get("is_important", "普通")
+        importance_star = "★ 重点" if importance == "重点" else "☆ 普通"
+
+        current_stage_name = EBBINGHAUS_STAGES[-1][0]
+        current_stage_score = EBBINGHAUS_STAGES[-1][2]
+        if days_since_first is not None:
+            for s_name, s_max, s_score in EBBINGHAUS_STAGES:
+                if days_since_first <= s_max:
+                    current_stage_name = s_name
+                    current_stage_score = s_score
+                    break
+
+        stage_row = "  ".join(
+            f"{s}:{'✓' if stage_done.get(s, False) else '✗'}"
+            for s in ["1d", "3d", "7d", "14d", "30d"]
+        )
+
+        # ── 颜色等级描述 ──
+        seg_desc = {
+            'fresh':    '白色  不需要复习',
+            'early':    '浅黄  需要复习',
+            'normal':   '橙色  重点复习',
+            'warning':  '番茄红  警告级',
+            'critical': '深红  紧急复习',
+            'overdue':  '暗红  已遗忘',
         }
-        
-        detail_info = f"""文件: {file_path}
 
-创建时间: {file_info.get('created_at', 'N/A')}
-最后修改: {file_info.get('last_modified', 'N/A')}
-更新次数: {file_info.get('update_count', 0)}
-文件大小: {file_info.get('file_size', 0)} 字节
-状态: {file_info.get('status', 'N/A')}
+        # ── 文件大小 ──
+        size_bytes = file_info.get("file_size", 0) or 0
+        if size_bytes >= 1024 * 1024:
+            size_str = f"{size_bytes / 1024 / 1024:.1f} MB"
+        elif size_bytes >= 1024:
+            size_str = f"{size_bytes / 1024:.1f} KB"
+        else:
+            size_str = f"{size_bytes} B"
 
-复习情况:
-  距今: {age_days:.1f}天
-  颜色分段: {segment_display.get(color_segment, '未知')}
+        score_str = f"{weight_score:.1f}" if weight_score is not None else "N/A"
+        days_first_str = f"（距今 {days_since_first:.1f} 天）" if days_since_first is not None else ""
+        days_mod_str = f"（距今 {days_since_mod:.1f} 天）" if days_since_mod is not None else ""
 
-更新历史（最近10次）:
-"""
-        self.detail_text.insert(tk.END, detail_info)
-        
-        timestamps = file_info.get('update_timestamps', [])
-        for ts in timestamps[-10:]:
-            dt = datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-            self.detail_text.insert(tk.END, f"  - {dt}\n")
-        
-        review_records = self.tracker.get_review_records(file_path)
-        if review_records:
-            self.detail_text.insert(tk.END, f"\n复习记录（最近5条）:\n")
-            for record in review_records[:5]:
-                record_time = record.get('datetime', 'N/A')
-                record_type = record.get('review_type', 'N/A')
-                record_notes = record.get('notes', '')
-                notes_display = f" - {record_notes}" if record_notes else ""
-                self.detail_text.insert(tk.END, f"  {record_time} [{record_type}]{notes_display}\n")
-        
+        lines = [
+            f"{'─'*36}",
+            f"  {Path(file_path).name}",
+            f"{'─'*36}",
+            f"路径      {file_path}",
+            f"大小      {size_str}",
+            f"",
+            f"── 时间信息 ──",
+            f"创建时间  {created_str}",
+            f"首次追踪  {first_study_str}{days_first_str}",
+            f"最后修改  {last_mod_str}{days_mod_str}",
+            f"",
+            f"── 学习状态 ──",
+            f"复习次数  {file_info.get('update_count', 0)} 次",
+            f"状态      {file_info.get('status', 'N/A')}",
+            f"重要程度  {importance_star}",
+            f"",
+            f"── 权重与颜色 ──",
+            f"权重分数  {score_str} 分",
+            f"颜色等级  {seg_desc.get(color_segment, color_segment)}",
+            f"",
+            f"── 艾宾浩斯进度 ──",
+            f"当前阶段  {current_stage_name}（紧急度 {current_stage_score} 分）",
+            f"阶段完成  {stage_row}",
+            f"",
+            f"── 最近更新记录 ──",
+        ]
+        self.detail_text.insert(tk.END, "\n".join(lines) + "\n")
+
+        timestamps = file_info.get("update_timestamps", [])
+        if timestamps:
+            for ts in sorted(timestamps)[-8:]:
+                dt = datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
+                self.detail_text.insert(tk.END, f"  {dt}\n")
+        else:
+            self.detail_text.insert(tk.END, "  暂无记录\n")
+
+        self.detail_text.insert(tk.END, "\n右键文件可查看完整复习历史与权重计算过程\n")
         self.detail_text.config(state=tk.DISABLED)
-        
-        notes = file_info.get('notes', '')
+
+        notes = file_info.get("notes", "")
         self.notes_text.insert(tk.END, notes)
         self.notes_text.config(state=tk.NORMAL)
-        
-        self._refresh_logs()
     
     def _on_tree_double_click(self, event):
         """树形项目双击事件 - 直接打开文件"""
         if not self.tree.selection():
             return
-        
         item = self.tree.selection()[0]
-        values = self.tree.item(item)
-        text = values['text']
-        
-        for file_info in self.tracker.get_file_list():
-            if Path(file_info['path']).name == text:
-                file_path = self.root_dir / file_info['path']
-                
-                if not file_path.exists():
-                    messagebox.showerror("错误", "文件不存在")
-                    return
-                
-                try:
-                    if platform.system() == 'Windows':
-                        os.startfile(str(file_path))
-                    elif platform.system() == 'Darwin':
-                        subprocess.Popen(['open', str(file_path)])
-                    else:
-                        subprocess.Popen(['xdg-open', str(file_path)])
-                except Exception as e:
-                    messagebox.showerror("错误", f"打开文件失败: {str(e)}")
-                
-                break
-    
-    def _refresh_logs(self):
-        """刷新日记显示"""
-        self.log_text.config(state=tk.NORMAL)
-        self.log_text.delete('1.0', tk.END)
-        
-        logs = self.tracker.get_study_logs()
-        if not logs:
-            self.log_text.insert(tk.END, "暂无学习日记")
-            self.log_text.config(state=tk.DISABLED)
+        rel_path = self._tree_file_map.get(item)
+        if not rel_path:
             return
-        
-        grouped_logs = {}
-        for log in logs:
-            date = log.get('date', '未知日期')
-            if date not in grouped_logs:
-                grouped_logs[date] = []
-            grouped_logs[date].append(log)
-        
-        for date in sorted(grouped_logs.keys(), reverse=True):
-            self.log_text.insert(tk.END, f"\n{date}\n")
-            self.log_text.insert(tk.END, "=" * 35 + "\n")
-            
-            for log in grouped_logs[date]:
-                content = log.get('content', '')
-                timestamp = log.get('timestamp', 0)
-                if timestamp:
-                    time_str = datetime.fromtimestamp(timestamp).strftime('%H:%M:%S')
-                    self.log_text.insert(tk.END, f"[{time_str}] {content}\n\n")
-                else:
-                    self.log_text.insert(tk.END, f"{content}\n\n")
-        
-        self.log_text.config(state=tk.DISABLED)
+        full_path = self.root_dir / rel_path
+        if not full_path.exists():
+            messagebox.showerror("错误", "文件不存在")
+            return
+        if platform.system() == 'Windows':
+            os.startfile(str(full_path))
+        elif platform.system() == 'Darwin':
+            subprocess.Popen(['open', str(full_path)])
+        else:
+            subprocess.Popen(['xdg-open', str(full_path)])
+    
     
     def _mark_studied(self):
         """标记为已学"""
@@ -623,9 +706,6 @@ class StudyTrackerGUI:
         self.tracker._save_database()
         messagebox.showinfo("成功", "笔记已保存")
     
-    def _open_study_log(self):
-        """打开学习日志窗口"""
-        StudyLogWindow(self.window, self.tracker)
     
     def _export_report(self):
         """导出报告"""
@@ -642,10 +722,10 @@ class StudyTrackerGUI:
         report += f"活跃文件: {stats['active_files']}\n"
         report += f"最近更新: {stats['recent_updates']}\n\n"
         
-        report += "时间分布\n"
+        report += "权重分数分布\n"
         report += "-" * 60 + "\n"
-        for range_name, count in stats['by_age_range'].items():
-            report += f"{range_name}: {count}\n"
+        for seg_name, count in stats.get('by_score_range', {}).items():
+            report += f"{seg_name}: {count}\n"
         
         report += "\n\n文件详细列表\n"
         report += "-" * 60 + "\n"
@@ -664,18 +744,144 @@ class StudyTrackerGUI:
     
     def _on_tree_right_click(self, event):
         """树形项目右键点击事件"""
-        item = self.tree.selection()
-        if not item:
-            item = self.tree.identify('item', event.x, event.y)
-            self.tree.selection_set(item)
-        
-        if not item:
+        item_id = self.tree.identify_row(event.y)
+        if not item_id:
             return
-        
+        self.tree.selection_set(item_id)
+
         menu = tk.Menu(self.window, tearoff=0)
+        file_path = self._tree_file_map.get(item_id)
+        if file_path:
+            file_info = self.tracker.data["files"].get(file_path, {})
+            is_important = file_info.get("is_important", "普通") == "重点"
+            label = "取消重点 ☆" if is_important else "标记为重点 ★"
+            menu.add_command(label=label,
+                             command=lambda fp=file_path: self._toggle_importance_for(fp))
+            menu.add_command(label="查看复习详情...",
+                             command=lambda fp=file_path: self._show_review_detail_popup(fp))
+            menu.add_separator()
         menu.add_command(label="忽略此目录", command=self._ignore_selected_directory)
         menu.post(event.x_root, event.y_root)
     
+    def _show_review_detail_popup(self, file_path: str):
+        """弹窗展示该文件完整复习历史与逐步权重计算过程"""
+        import time as _time
+
+        file_info = self.tracker.data["files"].get(file_path)
+        if not file_info:
+            return
+
+        popup = tk.Toplevel(self.window)
+        popup.title(f"复习详情  {Path(file_path).name}")
+        popup.geometry("700x560")
+        popup.resizable(True, True)
+
+        ttk.Label(popup, text=file_path, font=("Arial", 9), foreground="#555",
+                  wraplength=680, justify=tk.LEFT).pack(padx=10, pady=(8, 2), anchor=tk.W)
+
+        frame = ttk.Frame(popup)
+        frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+
+        sb = ttk.Scrollbar(frame)
+        sb.pack(side=tk.RIGHT, fill=tk.Y)
+
+        text = tk.Text(frame, wrap=tk.WORD, yscrollcommand=sb.set, font=("Courier New", 9))
+        text.pack(fill=tk.BOTH, expand=True)
+        sb.config(command=text.yview)
+
+        now = _time.time()
+        first_study_ts = file_info.get("first_study_timestamp") or file_info.get("first_seen_timestamp")
+        importance = file_info.get("is_important", "普通")
+        stage_done = file_info.get("stage_done", {})
+
+        # ══ 权重计算过程 ══
+        text.insert(tk.END, "═" * 52 + "\n")
+        text.insert(tk.END, "   权重计算过程\n")
+        text.insert(tk.END, "═" * 52 + "\n\n")
+
+        if first_study_ts:
+            days_since = (now - first_study_ts) / 86400.0
+            first_dt = datetime.fromtimestamp(first_study_ts).strftime("%Y-%m-%d %H:%M:%S")
+
+            cur_stage_name = EBBINGHAUS_STAGES[-1][0]
+            cur_stage_score = EBBINGHAUS_STAGES[-1][2]
+            for s_name, s_max, s_score in EBBINGHAUS_STAGES:
+                if days_since <= s_max:
+                    cur_stage_name = s_name
+                    cur_stage_score = s_score
+                    break
+
+            is_done = stage_done.get(cur_stage_name, False)
+            coef = IMPORTANCE_COEF.get(importance, 1.0)
+            weight = 0.0 if is_done else round(cur_stage_score * coef, 2)
+
+            text.insert(tk.END, f"  首次学习时间   {first_dt}\n")
+            text.insert(tk.END, f"  距今天数       {days_since:.2f} 天\n\n")
+            text.insert(tk.END, f"  当前应完成阶段 {cur_stage_name}\n")
+            text.insert(tk.END, f"    阶段紧急度   {cur_stage_score} 分\n")
+            text.insert(tk.END, f"  该阶段是否完成 {'✓ 已完成' if is_done else '✗ 未完成'}\n\n")
+            text.insert(tk.END, f"  重要程度       {importance}  (系数 ×{coef})\n\n")
+            if is_done:
+                text.insert(tk.END, f"  权重 = 0  （当前阶段已完成，暂不需要复习）\n")
+            else:
+                text.insert(tk.END, f"  权重 = {cur_stage_score} × {coef} = {weight} 分\n")
+
+            seg = self.tracker.get_color_segment(file_path)
+            seg_names = {
+                'fresh':    '白色  不需要复习',
+                'early':    '浅黄  需要复习',
+                'normal':   '橙色  重点复习',
+                'warning':  '番茄红  警告级',
+                'critical': '深红  紧急复习',
+                'overdue':  '暗红  已遗忘',
+            }
+            text.insert(tk.END, f"  颜色等级       {seg_names.get(seg, seg)}\n")
+        else:
+            text.insert(tk.END, "  首次学习时间尚未记录，无法计算权重\n")
+
+        # ══ 艾宾浩斯阶段完成情况 ══
+        text.insert(tk.END, "\n" + "─" * 52 + "\n")
+        text.insert(tk.END, "   艾宾浩斯阶段完成情况\n")
+        text.insert(tk.END, "─" * 52 + "\n\n")
+
+        for s_name, s_max, s_score in EBBINGHAUS_STAGES:
+            done = stage_done.get(s_name, False)
+            mark = "✓" if done else "✗"
+            text.insert(tk.END, f"  {mark} {s_name:4s}  ≤{s_max:2d} 天  紧急度 {s_score:3d} 分\n")
+
+        # ══ 复习历史 ══
+        records = self.tracker.get_review_records(file_path)
+        text.insert(tk.END, "\n" + "─" * 52 + "\n")
+        text.insert(tk.END, f"   复习历史  （共 {len(records)} 条记录）\n")
+        text.insert(tk.END, "─" * 52 + "\n\n")
+
+        if not records:
+            text.insert(tk.END, "  暂无复习记录\n")
+        else:
+            sorted_records = sorted(records, key=lambda r: r.get("timestamp", 0))
+            prev_ts = None
+            for i, rec in enumerate(sorted_records, 1):
+                rec_ts = rec.get("timestamp", 0)
+                dt_str = rec.get("datetime", datetime.fromtimestamp(rec_ts).strftime("%Y-%m-%d %H:%M:%S") if rec_ts else "N/A")
+                rec_type = rec.get("review_type", "N/A")
+                notes = rec.get("notes", "")
+
+                gap_str = ""
+                if prev_ts and rec_ts:
+                    gap_days = (rec_ts - prev_ts) / 86400.0
+                    gap_str = f"  ← 距上次 {gap_days:.1f} 天"
+                elif i == 1:
+                    gap_str = "  ← 首次"
+
+                text.insert(tk.END, f"  [{i:2d}]  {dt_str}  [{rec_type}]{gap_str}\n")
+                if notes:
+                    preview = notes[:70] + ("..." if len(notes) > 70 else "")
+                    text.insert(tk.END, f"        备注: {preview}\n")
+                prev_ts = rec_ts
+
+        text.config(state=tk.DISABLED)
+        ttk.Button(popup, text="关闭", command=popup.destroy).pack(pady=8)
+
     def _ignore_selected_directory(self):
         """忽略选中的目录"""
         item = self.tree.selection()
@@ -727,6 +933,24 @@ class StudyTrackerGUI:
         
         text.config(state=tk.DISABLED)
     
+    def _toggle_importance_for(self, file_path: str):
+        """切换指定文件的重要程度，并刷新列表和推荐栏"""
+        file_info = self.tracker.data["files"].get(file_path, {})
+        current = file_info.get("is_important", "普通")
+        new_importance = "重点" if current == "普通" else "普通"
+        self.tracker.mark_important(file_path, new_importance)
+        self._update_file_list()
+        self._update_urgency_list()
+        if self.in_detail_view and self.current_file == file_path:
+            self._show_file_detail_view(file_path)
+
+    def _toggle_importance(self):
+        """详情按钮：切换当前选中文件的重要程度"""
+        if not hasattr(self, 'current_file') or not self.current_file:
+            messagebox.showwarning("提示", "请先选择文件")
+            return
+        self._toggle_importance_for(self.current_file)
+
     def _check_reminders(self):
         """检查是否需要提醒"""
         stats = self.tracker.get_statistics()

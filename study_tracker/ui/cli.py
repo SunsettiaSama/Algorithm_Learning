@@ -30,20 +30,22 @@ class CLIInterface:
     def status(self):
         """显示学习状态"""
         stats = self.tracker.get_statistics()
-        
+
         print("\n学习进度统计")
         print("=" * 60)
         print(f"总文件数: {stats['total_files']}")
         print(f"活跃文件: {stats['active_files']}")
-        print(f"最近更新（1天内）: {stats['recent_updates']}")
-        
-        print("\n时间分布:")
-        print(f"  0-1天: {stats['by_age_range']['0_1days']}")
-        print(f"  1-3天: {stats['by_age_range']['1_3days']}")
-        print(f"  3-7天: {stats['by_age_range']['3_7days']}")
-        print(f"  7-14天: {stats['by_age_range']['7_14days']}")
-        print(f"  14-30天: {stats['by_age_range']['14_30days']}")
-        print(f"  30天+: {stats['by_age_range']['30+days']}")
+        print(f"低权重分数（fresh）: {stats['recent_updates']}")
+        print(f"待紧急复习: {stats['urgent_count']}")
+
+        score_dist = stats.get('by_score_range', {})
+        print("\n权重分数分布:")
+        print(f"  fresh   (不需要复习): {score_dist.get('fresh', 0)}")
+        print(f"  early   (需要复习):   {score_dist.get('early', 0)}")
+        print(f"  normal  (重点复习):   {score_dist.get('normal', 0)}")
+        print(f"  warning (警告级):     {score_dist.get('warning', 0)}")
+        print(f"  critical(紧急复习):   {score_dist.get('critical', 0)}")
+        print(f"  overdue (已遗忘):     {score_dist.get('overdue', 0)}")
     
     def list_files(self, filter_status: str = None, limit: int = 50):
         """列出文件"""

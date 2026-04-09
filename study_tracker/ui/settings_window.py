@@ -33,7 +33,7 @@ class SettingsWindow:
         notebook.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         intervals_frame = ttk.Frame(notebook)
-        notebook.add(intervals_frame, text="时间区间")
+        notebook.add(intervals_frame, text="权重分数阈值")
         self._setup_intervals_tab(intervals_frame)
         
         review_frame = ttk.Frame(notebook)
@@ -60,39 +60,39 @@ class SettingsWindow:
         ttk.Button(button_frame, text="关闭", command=self.window.destroy).pack(side=tk.RIGHT, padx=5)
     
     def _setup_intervals_tab(self, parent):
-        """设置时间区间标签"""
-        settings_data = self.settings.get_time_intervals()
-        
-        frame = ttk.LabelFrame(parent, text="复习时间区间配置（天数）", padding=10)
+        """设置权重分数阈值标签"""
+        settings_data = self.settings.get_score_thresholds()
+
+        frame = ttk.LabelFrame(parent, text="权重分数区间配置（0.0-1.0）", padding=10)
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
-        ttk.Label(frame, text="不需要复习（天）:").grid(row=0, column=0, sticky=tk.W, pady=5)
-        self.fresh_var = tk.StringVar(value=str(settings_data.get('fresh_days', 1)))
+
+        ttk.Label(frame, text="不需要复习（分数上限）:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        self.fresh_var = tk.StringVar(value=str(settings_data.get('fresh_max', 0.2)))
         ttk.Entry(frame, textvariable=self.fresh_var, width=20).grid(row=0, column=1, padx=10, pady=5)
-        ttk.Label(frame, text="白色 | 0-1天", foreground="gray", font=("Arial", 8)).grid(row=0, column=2, padx=5)
-        
-        ttk.Label(frame, text="需要复习（天）:").grid(row=1, column=0, sticky=tk.W, pady=5)
-        self.early_var = tk.StringVar(value=str(settings_data.get('early_days', 3)))
+        ttk.Label(frame, text="白色 | 分数 < fresh_max", foreground="gray", font=("Arial", 8)).grid(row=0, column=2, padx=5)
+
+        ttk.Label(frame, text="需要复习（分数上限）:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        self.early_var = tk.StringVar(value=str(settings_data.get('early_max', 0.4)))
         ttk.Entry(frame, textvariable=self.early_var, width=20).grid(row=1, column=1, padx=10, pady=5)
-        ttk.Label(frame, text="浅黄 | 1-3天", foreground="gray", font=("Arial", 8)).grid(row=1, column=2, padx=5)
-        
-        ttk.Label(frame, text="重点复习（天）:").grid(row=2, column=0, sticky=tk.W, pady=5)
-        self.normal_var = tk.StringVar(value=str(settings_data.get('normal_days', 7)))
+        ttk.Label(frame, text="浅黄 | fresh_max ~ early_max", foreground="gray", font=("Arial", 8)).grid(row=1, column=2, padx=5)
+
+        ttk.Label(frame, text="重点复习（分数上限）:").grid(row=2, column=0, sticky=tk.W, pady=5)
+        self.normal_var = tk.StringVar(value=str(settings_data.get('normal_max', 0.6)))
         ttk.Entry(frame, textvariable=self.normal_var, width=20).grid(row=2, column=1, padx=10, pady=5)
-        ttk.Label(frame, text="橙色 | 3-7天", foreground="gray", font=("Arial", 8)).grid(row=2, column=2, padx=5)
-        
-        ttk.Label(frame, text="警告级（天）:").grid(row=3, column=0, sticky=tk.W, pady=5)
-        self.warning_var = tk.StringVar(value=str(settings_data.get('warning_days', 14)))
+        ttk.Label(frame, text="橙色 | early_max ~ normal_max", foreground="gray", font=("Arial", 8)).grid(row=2, column=2, padx=5)
+
+        ttk.Label(frame, text="警告级（分数上限）:").grid(row=3, column=0, sticky=tk.W, pady=5)
+        self.warning_var = tk.StringVar(value=str(settings_data.get('warning_max', 0.8)))
         ttk.Entry(frame, textvariable=self.warning_var, width=20).grid(row=3, column=1, padx=10, pady=5)
-        ttk.Label(frame, text="番茄红 | 7-14天", foreground="gray", font=("Arial", 8)).grid(row=3, column=2, padx=5)
-        
-        ttk.Label(frame, text="紧急复习（天）:").grid(row=4, column=0, sticky=tk.W, pady=5)
-        self.critical_var = tk.StringVar(value=str(settings_data.get('critical_days', 30)))
+        ttk.Label(frame, text="番茄红 | normal_max ~ warning_max", foreground="gray", font=("Arial", 8)).grid(row=3, column=2, padx=5)
+
+        ttk.Label(frame, text="紧急复习（分数上限）:").grid(row=4, column=0, sticky=tk.W, pady=5)
+        self.critical_var = tk.StringVar(value=str(settings_data.get('critical_max', 1.0)))
         ttk.Entry(frame, textvariable=self.critical_var, width=20).grid(row=4, column=1, padx=10, pady=5)
-        ttk.Label(frame, text="深红 | 14-30天", foreground="gray", font=("Arial", 8)).grid(row=4, column=2, padx=5)
-        
-        ttk.Label(frame, text="已遗忘（30+天未更新）", foreground="gray", font=("Arial", 8)).grid(row=5, column=0, columnspan=3, pady=10)
-        ttk.Label(frame, text="暗红 | 30+天", foreground="gray", font=("Arial", 8)).grid(row=6, column=0, columnspan=3)
+        ttk.Label(frame, text="深红 | warning_max ~ critical_max", foreground="gray", font=("Arial", 8)).grid(row=4, column=2, padx=5)
+
+        ttk.Label(frame, text="暗红 | 分数 >= critical_max → 已遗忘",
+                  foreground="gray", font=("Arial", 8)).grid(row=5, column=0, columnspan=3, pady=10)
     
     def _setup_review_tab(self, parent):
         """设置复习周期标签"""
@@ -163,39 +163,38 @@ class SettingsWindow:
             first_hours = int(self.first_var.get())
             second_hours = int(self.second_var.get())
             third_hours = int(self.third_var.get())
-            
-            fresh_days = int(self.fresh_var.get())
-            early_days = int(self.early_var.get())
-            normal_days = int(self.normal_var.get())
-            warning_days = int(self.warning_var.get())
-            critical_days = int(self.critical_var.get())
-            
+
+            fresh_max = float(self.fresh_var.get())
+            early_max = float(self.early_var.get())
+            normal_max = float(self.normal_var.get())
+            warning_max = float(self.warning_var.get())
+            critical_max = float(self.critical_var.get())
+
             update_count_weight = float(self.update_count_var.get())
             time_weight = float(self.time_weight_var.get())
-            
+
             if not (0 <= update_count_weight <= 1) or not (0 <= time_weight <= 1):
                 messagebox.showerror("错误", "权重必须在 0.0 到 1.0 之间")
                 return
-            
+
             if first_hours <= 0 or second_hours <= 0 or third_hours <= 0:
                 messagebox.showerror("错误", "复习时间必须为正数")
                 return
-            
-            if fresh_days <= 0 or early_days <= fresh_days or normal_days <= early_days or \
-               warning_days <= normal_days or critical_days <= warning_days:
-                messagebox.showerror("错误", "时间区间必须依次递增")
+
+            if not (0 <= fresh_max < early_max < normal_max < warning_max < critical_max <= 150):
+                messagebox.showerror("错误", "分数阈值必须在 0-150 之间且依次递增（艾宾浩斯量程）")
                 return
-            
+
             self.settings.set_review_schedule(first_hours, second_hours, third_hours)
-            self.settings.set_time_intervals(fresh_days, early_days, normal_days, warning_days, critical_days)
+            self.settings.set_score_thresholds(fresh_max, early_max, normal_max, warning_max, critical_max)
             self.settings.set_mastery_weights(update_count_weight, time_weight)
-            
+
             extensions = [line.strip() for line in self.ignore_extensions_text.get("1.0", tk.END).split("\n") if line.strip()]
             directories = [line.strip() for line in self.ignore_directories_text.get("1.0", tk.END).split("\n") if line.strip()]
-            
+
             self.settings.set_ignore_extensions(extensions)
             self.settings.set_ignore_directories(directories)
-            
+
             messagebox.showinfo("成功", "设置已保存")
         except ValueError:
             messagebox.showerror("错误", "请输入有效的数值")
