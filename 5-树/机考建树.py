@@ -39,10 +39,54 @@ def get_input():
 
 一定是从根节点向下递归
 
-
 """
 
+import sys  # 1. 必须加这个！
 
+# ---------------------- 步骤1：处理输入，转化为邻接表 ----------------------
+def get_input():
+    all_nums = sys.stdin.read().split()  # 用这个最稳，不踩换行的坑
+    ptr = 0
+
+    # 读节点数量
+    n = int(all_nums[ptr])
+    ptr += 1
+
+    # 读节点权值
+    values = []
+    for i in range(n):
+        values.append(int(all_nums[ptr]))
+        ptr += 1
+
+    # 2. 建表：节点从1开始，所以列表长度 n+1
+    adj = [[] for i in range(n + 1)]
+
+    # 3. 树固定有 n-1 条边
+    for i in range(n - 1):
+        u = int(all_nums[ptr])
+        v = int(all_nums[ptr+1])
+        # 4. 无向边：双向添加！
+        adj[u].append(v)
+        adj[v].append(u)
+        ptr += 2
+
+    return n, values, adj
+
+
+
+# ---------------------- 你要的主接口！核心就在这 ----------------------
+if __name__ == "__main__":
+    print("===== 程序开始运行 =====")
+    
+    # 调用输入函数，拿到所有数据
+    n, values, adj = get_input()
+    
+    # 打印结果，验证对不对（大爷你看这里就行）
+    print(f"节点总数：{n}")
+    print(f"每个节点的权值：{values}")
+    print(f"树的邻接表：{adj}")
+    
+    print("===== 程序运行结束 =====")
 
 
 

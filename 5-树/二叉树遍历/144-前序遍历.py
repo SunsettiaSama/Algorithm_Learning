@@ -73,3 +73,8 @@ class Solution:
             dfs(node.right)
         
         dfs(root)
+
+
+"""
+0410扫了一眼
+"""

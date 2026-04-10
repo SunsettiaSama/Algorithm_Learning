@@ -760,9 +760,80 @@ class StudyTrackerGUI:
             menu.add_command(label="查看复习详情...",
                              command=lambda fp=file_path: self._show_review_detail_popup(fp))
             menu.add_separator()
+            menu.add_command(label="接续进度复习（温启动）",
+                             command=lambda fp=file_path: self._warm_resume_file(fp))
+            menu.add_command(label="从头重新开始（冷启动）",
+                             command=lambda fp=file_path: self._cold_restart_file(fp))
+            menu.add_separator()
         menu.add_command(label="忽略此目录", command=self._ignore_selected_directory)
         menu.post(event.x_root, event.y_root)
     
+    def _cold_restart_file(self, file_path: str):
+        """冷启动：完全重置艾宾浩斯周期，从第一阶段重新开始"""
+        name = Path(file_path).name
+        if not messagebox.askyesno(
+            "从头重新开始",
+            f"将对「{name}」执行冷启动：\n\n"
+            "• 清除所有阶段完成记录\n"
+            "• 复习时间线重置为今天\n"
+            "• 本次复习视为完成第 1 阶段（1d）\n\n"
+            "确认继续？"
+        ):
+            return
+        self.tracker.cold_restart(file_path)
+        self._refresh_data()
+        if self.in_detail_view and self.current_file == file_path:
+            self._show_file_detail_view(file_path)
+        messagebox.showinfo("完成", f"已冷启动「{name}」，复习计划从今天重新开始。")
+
+    def _warm_resume_file(self, file_path: str):
+        """温启动：从最后完成的阶段续接，调整时间线后标记下一阶段完成"""
+        file_info = self.tracker.data["files"].get(file_path, {})
+        stage_done = file_info.get("stage_done", {})
+        name = Path(file_path).name
+
+        # 预先告知用户将从哪个阶段续接
+        last_done = None
+        last_done_idx = -1
+        for i, (s_name, _, _) in enumerate(EBBINGHAUS_STAGES):
+            if stage_done.get(s_name, False):
+                last_done = s_name
+                last_done_idx = i
+
+        if last_done is None or last_done_idx >= len(EBBINGHAUS_STAGES) - 1:
+            tip = "无历史完成记录或已完成所有阶段，将自动改为冷启动。"
+            next_stage_tip = "→ 效果同「从头重新开始」"
+        else:
+            next_name = EBBINGHAUS_STAGES[last_done_idx + 1][0]
+            tip = f"检测到最后完成阶段：{last_done}"
+            next_stage_tip = f"→ 本次将续接完成 {next_name} 阶段，后续阶段等待复习"
+
+        if not messagebox.askyesno(
+            "接续进度复习",
+            f"将对「{name}」执行温启动：\n\n"
+            f"• {tip}\n"
+            f"• {next_stage_tip}\n"
+            "• 时间线自动调整到对应阶段的中间点\n\n"
+            "确认继续？"
+        ):
+            return
+
+        result = self.tracker.warm_resume(file_path)
+        self._refresh_data()
+        if self.in_detail_view and self.current_file == file_path:
+            self._show_file_detail_view(file_path)
+
+        if result["mode"] == "warm":
+            messagebox.showinfo(
+                "完成",
+                f"已温启动「{name}」\n\n"
+                f"续接自：{result['resume_from']} 阶段\n"
+                f"本次完成：{result['completed_stage']} 阶段\n"
+                f"下次提醒：{result['completed_stage']} 之后的下一阶段"
+            )
+        else:
+            messagebox.showinfo("完成", f"已对「{name}」执行冷启动（无历史阶段可续接）。")
+
     def _show_review_detail_popup(self, file_path: str):
         """弹窗展示该文件完整复习历史与逐步权重计算过程"""
         import time as _time
@@ -789,42 +860,56 @@ class StudyTrackerGUI:
         text.pack(fill=tk.BOTH, expand=True)
         sb.config(command=text.yview)
 
-        now = _time.time()
-        first_study_ts = file_info.get("first_study_timestamp") or file_info.get("first_seen_timestamp")
-        importance = file_info.get("is_important", "普通")
+        # ══ 权重计算过程（调用 tracker 统一接口）══
+        bd = self.tracker.get_weight_breakdown(file_path)
         stage_done = file_info.get("stage_done", {})
 
-        # ══ 权重计算过程 ══
         text.insert(tk.END, "═" * 52 + "\n")
         text.insert(tk.END, "   权重计算过程\n")
         text.insert(tk.END, "═" * 52 + "\n\n")
 
-        if first_study_ts:
-            days_since = (now - first_study_ts) / 86400.0
+        if bd:
+            first_study_ts = (
+                file_info.get("first_study_timestamp") or
+                file_info.get("first_seen_timestamp")
+            )
             first_dt = datetime.fromtimestamp(first_study_ts).strftime("%Y-%m-%d %H:%M:%S")
 
-            cur_stage_name = EBBINGHAUS_STAGES[-1][0]
-            cur_stage_score = EBBINGHAUS_STAGES[-1][2]
-            for s_name, s_max, s_score in EBBINGHAUS_STAGES:
-                if days_since <= s_max:
-                    cur_stage_name = s_name
-                    cur_stage_score = s_score
-                    break
-
-            is_done = stage_done.get(cur_stage_name, False)
-            coef = IMPORTANCE_COEF.get(importance, 1.0)
-            weight = 0.0 if is_done else round(cur_stage_score * coef, 2)
-
             text.insert(tk.END, f"  首次学习时间   {first_dt}\n")
-            text.insert(tk.END, f"  距今天数       {days_since:.2f} 天\n\n")
-            text.insert(tk.END, f"  当前应完成阶段 {cur_stage_name}\n")
-            text.insert(tk.END, f"    阶段紧急度   {cur_stage_score} 分\n")
-            text.insert(tk.END, f"  该阶段是否完成 {'✓ 已完成' if is_done else '✗ 未完成'}\n\n")
-            text.insert(tk.END, f"  重要程度       {importance}  (系数 ×{coef})\n\n")
-            if is_done:
-                text.insert(tk.END, f"  权重 = 0  （当前阶段已完成，暂不需要复习）\n")
+            text.insert(tk.END, f"  距今天数       {bd['days_since']:.2f} 天\n\n")
+
+            # 各阶段时间窗口说明
+            text.insert(tk.END, "  阶段时间窗口（距首次学习）：\n")
+            stage_names_list = [s[0] for s in EBBINGHAUS_STAGES]
+            cur_idx = stage_names_list.index(bd['stage_name'])
+            prev_max = 0
+            for i, (s_name, s_max, s_score) in enumerate(EBBINGHAUS_STAGES):
+                done = stage_done.get(s_name, False)
+                mark = "✓" if done else "✗"
+                is_cur = " ← 当前" if i == cur_idx else ""
+                missed_tag = " [已跳过]" if (i < cur_idx and not done) else ""
+                text.insert(tk.END,
+                    f"  {mark} {s_name:4s}  {prev_max:2d}~{s_max:2d}天  紧急度{s_score:3d}分"
+                    f"{is_cur}{missed_tag}\n"
+                )
+                prev_max = s_max
+            text.insert(tk.END, "\n")
+
+            text.insert(tk.END, f"  当前阶段       {bd['stage_name']}（紧急度 {bd['stage_score']} 分）\n")
+            text.insert(tk.END, f"  该阶段已完成   {'✓ 是' if bd['stage_is_done'] else '✗ 否'}\n\n")
+
+            if bd['stage_is_done']:
+                text.insert(tk.END, "  权重 = 0  （当前阶段已完成，暂不需要复习）\n")
             else:
-                text.insert(tk.END, f"  权重 = {cur_stage_score} × {coef} = {weight} 分\n")
+                text.insert(tk.END, f"  重要程度       {bd['importance']}（系数 ×{bd['coef']}）\n")
+                text.insert(tk.END, f"  基础权重       {bd['stage_score']} × {bd['coef']} = {bd['base_weight']:.1f}\n\n")
+                text.insert(tk.END, f"  跳过的历史阶段 {bd['missed_prior']} 个\n")
+                text.insert(tk.END, f"  退化倍率       1.0 + 0.25 × {bd['missed_prior']} = {bd['degradation']:.2f}×\n")
+                text.insert(tk.END, f"  ─────────────────────────────────────\n")
+                text.insert(tk.END,
+                    f"  最终权重       min(150, {bd['base_weight']:.1f} × {bd['degradation']:.2f})"
+                    f" = {bd['final_weight']:.1f} 分\n"
+                )
 
             seg = self.tracker.get_color_segment(file_path)
             seg_names = {
@@ -839,9 +924,9 @@ class StudyTrackerGUI:
         else:
             text.insert(tk.END, "  首次学习时间尚未记录，无法计算权重\n")
 
-        # ══ 艾宾浩斯阶段完成情况 ══
+        # ══ 艾宾浩斯阶段完成情况（汇总行）══
         text.insert(tk.END, "\n" + "─" * 52 + "\n")
-        text.insert(tk.END, "   艾宾浩斯阶段完成情况\n")
+        text.insert(tk.END, "   阶段完成汇总\n")
         text.insert(tk.END, "─" * 52 + "\n\n")
 
         for s_name, s_max, s_score in EBBINGHAUS_STAGES:

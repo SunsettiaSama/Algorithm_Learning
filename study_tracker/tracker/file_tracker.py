@@ -511,9 +511,13 @@ venv/
         return stage_name
 
     def _migrate_file_data(self):
-        """为旧格式文件补充艾宾浩斯相关字段，保持向后兼容"""
+        """
+        为旧格式文件补充艾宾浩斯相关字段，并一次性回溯历史更新时间戳，
+        将已存在的文件修改记录对应的艾宾浩斯阶段标记为已完成。
+        """
         changed = False
         default_stage_done = {s[0]: False for s in EBBINGHAUS_STAGES}
+
         for info in self.data["files"].values():
             if "stage_done" not in info:
                 info["stage_done"] = dict(default_stage_done)
@@ -528,8 +532,116 @@ venv/
                     int(time.time())
                 )
                 changed = True
+
+        # 一次性回溯：根据历史 update_timestamps 补填 stage_done
+        # 用数据库级标记确保只执行一次，避免每次启动重复扫描
+        if not self.data.get("_migrated_stage_backfill"):
+            for info in self.data["files"].values():
+                first_study_ts = (
+                    info.get("first_study_timestamp") or
+                    info.get("first_seen_timestamp")
+                )
+                if not first_study_ts:
+                    continue
+                for ts in info.get("update_timestamps", []):
+                    days = (ts - first_study_ts) / 86400.0
+                    if days < 0:
+                        continue
+                    stage_name, _ = self._get_current_stage(days)
+                    if not info["stage_done"].get(stage_name, False):
+                        info["stage_done"][stage_name] = True
+                        changed = True
+            self.data["_migrated_stage_backfill"] = True
+            changed = True
+
         if changed:
             self._save_database()
+
+    def cold_restart(self, file_path: str, notes: str = "") -> bool:
+        """
+        完全重置艾宾浩斯复习计划，从第一阶段重新开始。
+
+        - first_study_timestamp 重置为当前时间
+        - 所有 stage_done 清零
+        - 本次复习视为完成 1d 阶段（当前时刻处于 0~1 天窗口内）
+        """
+        if file_path not in self.data["files"]:
+            return False
+        now_ts = int(time.time())
+        entry = self.data["files"][file_path]
+        entry["first_study_timestamp"] = now_ts
+        entry["first_seen_timestamp"] = now_ts
+        entry["stage_done"] = {s[0]: False for s in EBBINGHAUS_STAGES}
+        entry["stage_done"]["1d"] = True
+        entry["update_count"] = entry.get("update_count", 0) + 1
+        entry["update_timestamps"] = entry.get("update_timestamps", []) + [now_ts]
+        note_text = f"冷启动（完全重置）{notes}".strip()
+        self._record_review_detail(file_path, "cold_restart", note_text, now_ts)
+        self._save_database()
+        return True
+
+    def warm_resume(self, file_path: str, notes: str = "") -> Dict:
+        """
+        智能续接复习计划。
+
+        算法：
+          1. 找到历史上最后一个已完成的阶段 k（index）
+          2. 若无已完成阶段 或 30d 已完成 → 降级为 cold_restart
+          3. 否则：下一个阶段 = EBBINGHAUS_STAGES[k+1]
+             - 把 first_study_timestamp 调整到"当前时刻处于 k+1 阶段中间点"
+               即 first_study_ts = now - midpoint_day × 86400
+               midpoint_day = (k 阶段最大天数 + k+1 阶段最大天数) / 2
+             - 保留 0..k 阶段为完成状态
+             - 标记 k+1 阶段为完成（本次复习）
+             - 重置 k+2 以后的阶段为 False
+
+        Returns:
+            dict: mode='warm'/'cold', resume_from=阶段名, completed_stage=阶段名
+        """
+        if file_path not in self.data["files"]:
+            return {"mode": "error"}
+
+        entry = self.data["files"][file_path]
+        stage_done = entry.get("stage_done", {})
+
+        last_done_idx = -1
+        for i, (s_name, _, _) in enumerate(EBBINGHAUS_STAGES):
+            if stage_done.get(s_name, False):
+                last_done_idx = i
+
+        # 无历史完成阶段 或 最后阶段（30d）已完成 → 冷启动
+        if last_done_idx == -1 or last_done_idx >= len(EBBINGHAUS_STAGES) - 1:
+            self.cold_restart(file_path, notes)
+            return {"mode": "cold"}
+
+        next_idx = last_done_idx + 1
+        last_max_day = EBBINGHAUS_STAGES[last_done_idx][1]
+        next_name, next_max_day, _ = EBBINGHAUS_STAGES[next_idx]
+
+        # 把"现在"对齐到下一阶段的中间点
+        midpoint_day = (last_max_day + next_max_day) / 2.0
+        now_ts = int(time.time())
+        new_first_study_ts = int(now_ts - midpoint_day * 86400)
+
+        entry["first_study_timestamp"] = new_first_study_ts
+        entry["first_seen_timestamp"] = new_first_study_ts
+
+        for i, (s_name, _, _) in enumerate(EBBINGHAUS_STAGES):
+            if i <= last_done_idx:
+                entry["stage_done"][s_name] = True
+            elif i == next_idx:
+                entry["stage_done"][s_name] = True   # 本次复习完成此阶段
+            else:
+                entry["stage_done"][s_name] = False  # 后续阶段等待复习
+
+        entry["update_count"] = entry.get("update_count", 0) + 1
+        entry["update_timestamps"] = entry.get("update_timestamps", []) + [now_ts]
+
+        resume_from = EBBINGHAUS_STAGES[last_done_idx][0]
+        note_text = f"温启动（从 {resume_from} 续接，完成 {next_name} 阶段）{notes}".strip()
+        self._record_review_detail(file_path, "warm_resume", note_text, now_ts)
+        self._save_database()
+        return {"mode": "warm", "resume_from": resume_from, "completed_stage": next_name}
 
     def mark_important(self, file_path: str, importance: str) -> bool:
         """切换文件的重要程度标记（'普通' 或 '重点'）"""
@@ -545,12 +657,23 @@ venv/
         """
         基于艾宾浩斯遗忘曲线计算文件的复习权重分数（0-150）
 
-        算法：权重 = 阶段紧急度 × 重点系数
-          - 阶段已完成 → 0（当前阶段不需要复习）
-          - 阶段未完成 → stage_score × coef
+        阶段时间窗口（从首次学习起）：
+          1d:  0~1  天  紧急度 20
+          3d:  1~3  天  紧急度 40
+          7d:  3~7  天  紧急度 60
+          14d: 7~14 天  紧急度 80
+          30d: 14~30天  紧急度 100
 
-        阶段紧急度：1d=20, 3d=40, 7d=60, 14d=80, 30d=100
-        重点系数：普通=1.0, 重点=1.5（最高 150 分）
+        计算步骤：
+          1. 当前阶段已完成 → 权重 = 0
+          2. 当前阶段未完成：
+               base = 阶段紧急度 × 重点系数
+               missed_prior = 当前阶段之前未完成的阶段数
+               退化倍率 = 1.0 + 0.25 × missed_prior（每跳过一个过去阶段掌握度退化 25%）
+               weight = min(150, base × 退化倍率)
+
+        重点系数：普通=1.0, 重点=1.5
+        退化倍率上限：missed_prior 最多 4 → 倍率最高 2.0
         """
         if file_path not in self.data["files"]:
             return None
@@ -565,14 +688,71 @@ venv/
 
         days = (time.time() - first_study_ts) / 86400.0
         stage_name, stage_score = self._get_current_stage(days)
-
         stage_done = file_info.get("stage_done", {})
+
         if stage_done.get(stage_name, False):
             return 0.0
 
         importance = file_info.get("is_important", "普通")
         coef = IMPORTANCE_COEF.get(importance, 1.0)
-        return round(stage_score * coef, 2)
+        base_weight = stage_score * coef
+
+        # 退化机制：当前阶段未完成时，检查有多少"应已完成"的过去阶段也未完成
+        stage_index = [s[0] for s in EBBINGHAUS_STAGES].index(stage_name)
+        missed_prior = sum(
+            1 for i, (s_name, _, _) in enumerate(EBBINGHAUS_STAGES)
+            if i < stage_index and not stage_done.get(s_name, False)
+        )
+        degradation = 1.0 + 0.25 * missed_prior
+        return round(min(150.0, base_weight * degradation), 2)
+
+    def get_weight_breakdown(self, file_path: str) -> Optional[Dict]:
+        """
+        返回权重计算的详细分解，供 UI 展示。
+
+        Returns:
+            dict 包含 days_since, stage_name, stage_score, stage_done_flag,
+            importance, coef, missed_prior, degradation, base_weight, final_weight
+        """
+        if file_path not in self.data["files"]:
+            return None
+        file_info = self.data["files"][file_path]
+        first_study_ts = (
+            file_info.get("first_study_timestamp") or
+            file_info.get("first_seen_timestamp")
+        )
+        if first_study_ts is None:
+            return None
+
+        days = (time.time() - first_study_ts) / 86400.0
+        stage_name, stage_score = self._get_current_stage(days)
+        stage_done = file_info.get("stage_done", {})
+        is_done = stage_done.get(stage_name, False)
+        importance = file_info.get("is_important", "普通")
+        coef = IMPORTANCE_COEF.get(importance, 1.0)
+        base_weight = stage_score * coef
+
+        stage_index = [s[0] for s in EBBINGHAUS_STAGES].index(stage_name)
+        missed_prior = sum(
+            1 for i, (s_name, _, _) in enumerate(EBBINGHAUS_STAGES)
+            if i < stage_index and not stage_done.get(s_name, False)
+        )
+        degradation = 1.0 + 0.25 * missed_prior
+        final_weight = 0.0 if is_done else round(min(150.0, base_weight * degradation), 2)
+
+        return {
+            "days_since": days,
+            "stage_name": stage_name,
+            "stage_score": stage_score,
+            "stage_is_done": is_done,
+            "importance": importance,
+            "coef": coef,
+            "base_weight": base_weight,
+            "missed_prior": missed_prior,
+            "degradation": degradation,
+            "final_weight": final_weight,
+            "stage_done": stage_done,
+        }
 
     def get_color_level(self, weight_score: float) -> str:
         """

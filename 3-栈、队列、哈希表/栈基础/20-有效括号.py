@@ -81,3 +81,62 @@ class Solution:
                 
         return len(stack) == 0
 
+
+
+
+"""
+V2 手搓
+
+"""
+
+
+class Solution:
+    def isValid(self, s):
+
+        if len(s) % 2 == 1: # 问题在这里，取余必须为1，不是取整，顺带一提，整数截断应该用int
+            return False
+        
+        hash_dict = {
+            "{": "}", 
+            "(": ")", 
+            "[": "]"
+        }
+
+        stack = list()
+
+        for char in s:
+            if char in hash_dict: # 左括号
+                stack.append(char)
+            elif char in hash_dict.values(): # 右括号
+                if not stack:
+                    return False
+                top_char = stack.pop()
+                if char != hash_dict[top_char]:
+                    return False
+
+            else:
+                # 字符串，这个时候不需要处理字符串，可以跳过
+                pass
+
+        return len(stack) == 0
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
