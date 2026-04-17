@@ -75,4 +75,60 @@ V2
 # 平方根，二分查找的典型题目
 
 
+class Solution:
+    def mySqrt(self, x: int) -> int:
+
+        if x == 0:
+            return 0
+        elif x == 1:
+            return 1
+        
+        left_index = 0
+        right_index = x
+
+        while left_index < right_index:
+
+            mid = (left_index + right_index) // 2
+            square = mid * mid 
+            if square == x:
+                return mid
+            elif square < x:
+                left_index = mid # ERROR：边界条件错误，忘记加一
+            else:
+                right_index = mid # ERROR：边界条件错误，忘记加一
+    
+        return right_index
+
+
+"""
+V2
+
+"""
+# 平方根，二分查找的典型题目
+
+
+class Solution:
+    def mySqrt(self, x: int) -> int:
+
+        if x == 0:
+            return 0
+        elif x == 1:
+            return 1
+        
+        left_index = 0
+        right_index = x
+
+        while left_index < right_index:
+
+            mid = (left_index + right_index) // 2
+            square = mid * mid 
+            if square == x:
+                return mid
+            elif square < x:
+                left_index = mid + 1# ERROR：边界条件错误，忘记加一
+            else:
+                right_index = mid + 1# ERROR：边界条件错误，忘记加一
+    
+        return right_index
+
 
