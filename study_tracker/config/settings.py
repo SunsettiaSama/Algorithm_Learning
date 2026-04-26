@@ -153,6 +153,12 @@ class StudySettings:
                 "time_weight": 0.4,
                 "description": "掌握度计算权重"
             },
+            "random_sampling": {
+                "enabled": False,
+                "sample_size_per_tier": 10,
+                "sort_order": "asc",
+                "description": "同权重层次内随机抽样，避免复习列表顺序固定；sort_order: asc=升序(近期学的在前), desc=降序(最紧急在前)"
+            },
             "advanced_settings": {
                 "forgetting_curve": "PLACEHOLDER_ebbinghaus_curve_not_implemented",
                 "adaptive_schedule": "PLACEHOLDER_adaptive_scheduling_not_implemented",
@@ -342,6 +348,34 @@ class StudySettings:
         self._save_settings()
         return True
     
+    def get_random_sampling_settings(self) -> Dict:
+        """获取随机抽样配置"""
+        return self.data.get("random_sampling", {
+            "enabled": False,
+            "sample_size_per_tier": 10,
+            "sort_order": "asc",
+        })
+
+    def set_random_sampling_settings(self, enabled: bool, sample_size_per_tier: int,
+                                     sort_order: str = "asc") -> bool:
+        """
+        设置随机抽样配置
+
+        Args:
+            enabled: 是否启用随机抽样
+            sample_size_per_tier: 每个权重层次最多抽取的文件数
+            sort_order: 排序方向，'asc' 升序（近期学的在前）或 'desc' 降序（最紧急在前）
+        """
+        if sort_order not in ("asc", "desc"):
+            sort_order = "asc"
+        if "random_sampling" not in self.data:
+            self.data["random_sampling"] = {}
+        self.data["random_sampling"]["enabled"] = enabled
+        self.data["random_sampling"]["sample_size_per_tier"] = sample_size_per_tier
+        self.data["random_sampling"]["sort_order"] = sort_order
+        self._save_settings()
+        return True
+
     def reset_to_default(self) -> bool:
         """重置为默认设置"""
         self.data = self._get_default_settings()

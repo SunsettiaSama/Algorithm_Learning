@@ -22,7 +22,7 @@ class SettingsWindow:
         self.settings = settings
         self.window = tk.Toplevel(parent)
         self.window.title("学习设置")
-        self.window.geometry("500x600")
+        self.window.geometry("500x650")
         self.window.resizable(False, False)
         
         self._setup_ui()
@@ -48,6 +48,10 @@ class SettingsWindow:
         notebook.add(ignore_frame, text="忽略设置")
         self._setup_ignore_tab(ignore_frame)
         
+        sampling_frame = ttk.Frame(notebook)
+        notebook.add(sampling_frame, text="随机抽样")
+        self._setup_sampling_tab(sampling_frame)
+
         advanced_frame = ttk.Frame(notebook)
         notebook.add(advanced_frame, text="高级设置")
         self._setup_advanced_tab(advanced_frame)
@@ -141,6 +145,69 @@ class SettingsWindow:
         """.strip()
         ttk.Label(frame, text=info_text, justify=tk.LEFT, font=("Arial", 9)).grid(row=3, column=0, columnspan=2, pady=10)
     
+    def _setup_sampling_tab(self, parent):
+        """设置随机抽样标签"""
+        sampling_cfg = self.settings.get_random_sampling_settings()
+
+        sampling_frame = ttk.LabelFrame(parent, text="随机抽样", padding=10)
+        sampling_frame.pack(fill=tk.X, padx=10, pady=(10, 5))
+
+        self.sampling_enabled_var = tk.BooleanVar(value=sampling_cfg.get("enabled", False))
+        ttk.Checkbutton(
+            sampling_frame,
+            text="启用随机抽样",
+            variable=self.sampling_enabled_var,
+            command=self._on_sampling_toggle,
+        ).grid(row=0, column=0, columnspan=2, sticky=tk.W, pady=6)
+
+        ttk.Label(sampling_frame, text="每层最多抽取文件数:").grid(row=1, column=0, sticky=tk.W, pady=5)
+        self.sample_size_var = tk.StringVar(value=str(sampling_cfg.get("sample_size_per_tier", 10)))
+        self.sample_size_entry = ttk.Entry(sampling_frame, textvariable=self.sample_size_var, width=10)
+        self.sample_size_entry.grid(row=1, column=1, sticky=tk.W, padx=10, pady=5)
+
+        ttk.Label(
+            sampling_frame,
+            text=(
+                "权重层次共 5 级：early / normal / warning / critical / overdue\n"
+                "每个层次内随机抽取至多 N 个文件，避免同权重文件顺序固定。"
+            ),
+            justify=tk.LEFT, font=("Arial", 8), foreground="gray",
+        ).grid(row=2, column=0, columnspan=2, sticky=tk.W, pady=(4, 0))
+
+        sort_frame = ttk.LabelFrame(parent, text="排序方向", padding=10)
+        sort_frame.pack(fill=tk.X, padx=10, pady=(5, 10))
+
+        self.sort_order_var = tk.StringVar(value=sampling_cfg.get("sort_order", "asc"))
+
+        ttk.Radiobutton(
+            sort_frame,
+            text="升序  —  近期学习（权重小）在前，长期未复习（权重大）在后",
+            variable=self.sort_order_var,
+            value="asc",
+        ).pack(anchor=tk.W, pady=4)
+
+        ttk.Radiobutton(
+            sort_frame,
+            text="降序  —  最紧急（权重大）在前，近期学习（权重小）在后",
+            variable=self.sort_order_var,
+            value="desc",
+        ).pack(anchor=tk.W, pady=4)
+
+        ttk.Label(
+            sort_frame,
+            text="升序：从「已学但待巩固」逐步过渡到「长期遗忘」；降序：优先处理最紧急项。",
+            justify=tk.LEFT, font=("Arial", 8), foreground="gray",
+        ).pack(anchor=tk.W, pady=(6, 0))
+
+        self._on_sampling_toggle()
+
+    def _on_sampling_toggle(self):
+        """根据启用状态切换抽样数量输入框的可用性"""
+        if self.sampling_enabled_var.get():
+            self.sample_size_entry.config(state="normal")
+        else:
+            self.sample_size_entry.config(state="disabled")
+
     def _setup_advanced_tab(self, parent):
         """设置高级选项标签"""
         frame = ttk.LabelFrame(parent, text="高级设置（开发中）", padding=10)
@@ -185,9 +252,17 @@ class SettingsWindow:
                 messagebox.showerror("错误", "分数阈值必须在 0-150 之间且依次递增（艾宾浩斯量程）")
                 return
 
+            sample_size = int(self.sample_size_var.get())
+            if sample_size < 1:
+                messagebox.showerror("错误", "每层抽取数量至少为 1")
+                return
+
             self.settings.set_review_schedule(first_hours, second_hours, third_hours)
             self.settings.set_score_thresholds(fresh_max, early_max, normal_max, warning_max, critical_max)
             self.settings.set_mastery_weights(update_count_weight, time_weight)
+            self.settings.set_random_sampling_settings(
+                self.sampling_enabled_var.get(), sample_size, self.sort_order_var.get()
+            )
 
             extensions = [line.strip() for line in self.ignore_extensions_text.get("1.0", tk.END).split("\n") if line.strip()]
             directories = [line.strip() for line in self.ignore_directories_text.get("1.0", tk.END).split("\n") if line.strip()]

@@ -107,10 +107,23 @@
     "time_weight": 0.4,
     "description": "掌握度计算权重"
   },
+  "random_sampling": {
+    "enabled": true,
+    "sample_size_per_tier": 10,
+    "sort_order": "asc",
+    "description": "同权重层次内随机抽样，避免复习列表顺序固定；sort_order: asc=升序(近期学的在前), desc=降序(最紧急在前)"
+  },
   "advanced_settings": {
     "forgetting_curve": "PLACEHOLDER_ebbinghaus_curve_not_implemented",
     "adaptive_schedule": "PLACEHOLDER_adaptive_scheduling_not_implemented",
     "ml_prediction": "PLACEHOLDER_ml_based_prediction_not_implemented",
     "description": "高级设置（待实现）"
+  },
+  "score_thresholds": {
+    "fresh_max": 1.0,
+    "early_max": 40.0,
+    "normal_max": 60.0,
+    "warning_max": 80.0,
+    "critical_max": 100.0
   }
 }

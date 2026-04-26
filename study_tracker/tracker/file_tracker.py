@@ -161,6 +161,7 @@ venv/
             "files": {},
             "study_logs": [],
             "review_records": [],
+            "rename_history": [],
             "ignored_dirs": []
         }
     
@@ -185,68 +186,100 @@ venv/
         self.ignored_patterns = self._load_ignore_patterns()
         new_files = 0
         updated_files = 0
+        renamed_files = 0
         current_files = {}
-        
+
+        # 构建 file_id → stored_path 反向索引，用于重命名检测
+        id_to_stored_path: Dict[str, str] = {}
+        for rel_path, info in self.data["files"].items():
+            fid = info.get("file_id")
+            if fid:
+                id_to_stored_path[fid] = rel_path
+
         for file_path in self.root_dir.rglob("*"):
             if file_path.is_dir():
                 continue
-            
+
             if self._should_ignore(file_path):
                 continue
-            
+
             rel_path = str(file_path.relative_to(self.root_dir)).replace('\\', '/')
-            
+
             stat = file_path.stat()
             mtime = stat.st_mtime
             ctime = self._get_file_creation_time(stat)
             size = stat.st_size
-            
+            file_id = self._get_file_id(stat, file_path)
+
             current_files[rel_path] = mtime
-            
+
             if rel_path not in self.data["files"]:
                 now_ts = int(time.time())
-                self.data["files"][rel_path] = {
-                    "path": rel_path,
-                    "created_at": datetime.fromtimestamp(ctime).isoformat(),
-                    "created_timestamp": int(ctime),
-                    "last_modified": datetime.fromtimestamp(mtime).isoformat(),
-                    "last_modified_timestamp": mtime,
-                    "first_seen_timestamp": now_ts,
-                    "first_study_timestamp": now_ts,
-                    "update_count": 0,
-                    "update_timestamps": [now_ts],
-                    "file_size": size,
-                    "status": "新建",
-                    "notes": "",
-                    "stage_done": {s[0]: False for s in EBBINGHAUS_STAGES},
-                    "is_important": "普通",
-                }
-                new_files += 1
+                old_path = id_to_stored_path.get(file_id)
+
+                if old_path and old_path != rel_path and old_path in self.data["files"]:
+                    # 同一 file_id 出现在新路径 → 重命名/移动
+                    self._migrate_renamed_file(old_path, rel_path, file_id, now_ts)
+                    id_to_stored_path[file_id] = rel_path
+                    # 同步更新 mtime（如果文件在移动过程中也被修改）
+                    entry = self.data["files"][rel_path]
+                    if mtime > entry.get("last_modified_timestamp", 0):
+                        entry["last_modified"] = datetime.fromtimestamp(mtime).isoformat()
+                        entry["last_modified_timestamp"] = mtime
+                        entry["file_size"] = size
+                    renamed_files += 1
+                else:
+                    self.data["files"][rel_path] = {
+                        "path": rel_path,
+                        "file_id": file_id,
+                        "created_at": datetime.fromtimestamp(ctime).isoformat(),
+                        "created_timestamp": int(ctime),
+                        "last_modified": datetime.fromtimestamp(mtime).isoformat(),
+                        "last_modified_timestamp": mtime,
+                        "first_seen_timestamp": now_ts,
+                        "first_study_timestamp": now_ts,
+                        "update_count": 0,
+                        "update_timestamps": [now_ts],
+                        "file_size": size,
+                        "status": "新建",
+                        "notes": "",
+                        "rename_history": [],
+                        "stage_done": {s[0]: False for s in EBBINGHAUS_STAGES},
+                        "is_important": "普通",
+                    }
+                    id_to_stored_path[file_id] = rel_path
+                    new_files += 1
             else:
-                old_mtime = self.data["files"][rel_path].get("last_modified_timestamp")
+                entry = self.data["files"][rel_path]
+                # 补填 file_id（旧记录可能没有）
+                if not entry.get("file_id"):
+                    entry["file_id"] = file_id
+                    id_to_stored_path[file_id] = rel_path
+
+                old_mtime = entry.get("last_modified_timestamp")
                 if old_mtime is None or mtime > old_mtime:
                     now_ts = int(time.time())
-                    self.data["files"][rel_path]["last_modified"] = datetime.fromtimestamp(mtime).isoformat()
-                    self.data["files"][rel_path]["last_modified_timestamp"] = mtime
-                    self.data["files"][rel_path]["update_count"] += 1
-                    self.data["files"][rel_path]["update_timestamps"].append(now_ts)
-                    self.data["files"][rel_path]["file_size"] = size
-                    # 文件修改 = 完成当前艾宾浩斯复习阶段
+                    entry["last_modified"] = datetime.fromtimestamp(mtime).isoformat()
+                    entry["last_modified_timestamp"] = mtime
+                    entry["update_count"] += 1
+                    entry["update_timestamps"].append(now_ts)
+                    entry["file_size"] = size
                     self._mark_current_stage_done(rel_path, now_ts)
                     self._record_review_detail(rel_path, "file_modified", "", now_ts)
                     updated_files += 1
-                if self.data["files"][rel_path]["status"] == "已删除":
-                    self.data["files"][rel_path]["status"] = "新建"
-        
+                if entry["status"] == "已删除":
+                    entry["status"] = "新建"
+
         for rel_path in list(self.data["files"].keys()):
             if rel_path not in current_files and self.data["files"][rel_path]["status"] != "已删除":
                 self.data["files"][rel_path]["status"] = "已删除"
-        
+
         self._save_database()
-        
+
         return {
             "new_files": new_files,
             "updated_files": updated_files,
+            "renamed_files": renamed_files,
             "total_files": len(current_files),
             "scanned_at": datetime.now().isoformat()
         }
@@ -291,6 +324,55 @@ venv/
         
         return stat_result.st_mtime
     
+    def _get_file_id(self, stat_result, file_path: Path) -> str:
+        """
+        获取文件的稳定唯一标识符（跨重命名/移动保持不变）。
+
+        优先级：
+        1. st_ino（NTFS/ext4 等现代文件系统均可靠）
+        2. 回退：创建时间纳秒级时间戳 + 文件大小组成的指纹
+        """
+        ino = getattr(stat_result, 'st_ino', 0)
+        if ino:
+            return f"ino:{ino}"
+        ctime = self._get_file_creation_time(stat_result)
+        ctime_ns = int(ctime * 1_000_000_000)
+        return f"fp:{ctime_ns}_{stat_result.st_size}"
+
+    def _migrate_renamed_file(self, old_path: str, new_path: str,
+                               file_id: str, timestamp: int):
+        """
+        将 old_path 的所有记录迁移到 new_path，保留完整历史。
+
+        同步更新：
+        - data["files"] 的键和 path 字段
+        - 文件记录内的 rename_history
+        - 全局 data["rename_history"]
+        - data["review_records"] 中对旧路径的引用
+        """
+        record = self.data["files"].pop(old_path)
+        record["path"] = new_path
+        record["file_id"] = file_id
+        record.setdefault("rename_history", []).append({
+            "old_path": old_path,
+            "new_path": new_path,
+            "timestamp": timestamp,
+            "datetime": datetime.fromtimestamp(timestamp).isoformat(),
+        })
+        self.data["files"][new_path] = record
+
+        self.data.setdefault("rename_history", []).append({
+            "old_path": old_path,
+            "new_path": new_path,
+            "file_id": file_id,
+            "timestamp": timestamp,
+            "datetime": datetime.fromtimestamp(timestamp).isoformat(),
+        })
+
+        for entry in self.data.get("review_records", []):
+            if entry.get("file_path") == old_path:
+                entry["file_path"] = new_path
+
     def record_update(self, file_path: str, notes: str = ""):
         """
         记录文件的手动更新（等价于一次复习），自动完成当前艾宾浩斯阶段。
@@ -552,6 +634,22 @@ venv/
                         info["stage_done"][stage_name] = True
                         changed = True
             self.data["_migrated_stage_backfill"] = True
+            changed = True
+
+        # 为旧记录补填 file_id（仅在文件仍存在时）
+        for rel_path, info in self.data["files"].items():
+            if "file_id" not in info:
+                full_path = self.root_dir / rel_path
+                if full_path.exists():
+                    stat = full_path.stat()
+                    info["file_id"] = self._get_file_id(stat, full_path)
+                else:
+                    info["file_id"] = None
+                changed = True
+
+        # 确保全局 rename_history 存在
+        if "rename_history" not in self.data:
+            self.data["rename_history"] = []
             changed = True
 
         if changed:
@@ -860,14 +958,49 @@ venv/
         files.sort(key=lambda x: x.get("update_timestamps", [0])[-1], reverse=True)
         return files
     
+    def _get_random_sampling_settings(self) -> Dict:
+        """获取随机抽样配置，不可用时返回默认值"""
+        from ..config.settings import StudySettings
+        try:
+            settings = StudySettings()
+            return settings.get_random_sampling_settings()
+        except:
+            return {"enabled": False, "sample_size_per_tier": 10}
+
     def get_urgent_files(self) -> List[Dict]:
-        """获取需要复习的文件（当前艾宾浩斯阶段未完成，即权重分数 > 0），按分数降序排列"""
-        urgent = []
-        for file_info in self.get_file_list():
-            score = file_info.get("weight_score")
-            if score is not None and score > 0:
-                urgent.append(file_info)
-        return sorted(urgent, key=lambda x: x.get("weight_score", 0), reverse=True)
+        """
+        获取需要复习的文件（权重分数 > 0），按分数升序排列。
+
+        排列规则：权重小（近期已学）的放前面，权重大（长期未复习）的放后面。
+        若启用随机抽样，先按权重层次（tier）分组，每组内随机抽取至多
+        sample_size_per_tier 个文件，再统一升序排列。
+        """
+        import random
+
+        all_urgent = [
+            f for f in self.get_file_list()
+            if f.get("weight_score") is not None and f.get("weight_score") > 0
+        ]
+
+        sampling_cfg = self._get_random_sampling_settings()
+        reverse = sampling_cfg.get("sort_order", "asc") == "desc"
+
+        if sampling_cfg.get("enabled", False):
+            sample_size = max(1, int(sampling_cfg.get("sample_size_per_tier", 10)))
+            tiers: Dict[str, List] = {}
+            for file_info in all_urgent:
+                tier = self.get_color_segment(file_info["path"])
+                tiers.setdefault(tier, []).append(file_info)
+
+            sampled: List[Dict] = []
+            for files in tiers.values():
+                if len(files) > sample_size:
+                    sampled.extend(random.sample(files, sample_size))
+                else:
+                    sampled.extend(files)
+            return sorted(sampled, key=lambda x: x.get("weight_score", 0), reverse=reverse)
+
+        return sorted(all_urgent, key=lambda x: x.get("weight_score", 0), reverse=reverse)
     
     def get_statistics(self) -> Dict:
         """获取统计信息"""

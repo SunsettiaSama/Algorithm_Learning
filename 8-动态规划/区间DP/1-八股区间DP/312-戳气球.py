@@ -4,7 +4,6 @@
 """
 from typing import List
 
-
 class Solution:
     def maxCoins(self, nums: List[int]) -> int:
 
@@ -33,3 +32,26 @@ class Solution:
             
         return dp[0][size + 1]
     
+
+
+class Solution:
+    def maxCoins(self, nums: List[int]) -> int:
+
+        n = len(nums)
+        m = n + 2
+        vals = [1] + nums + [1]
+        # dp[i][j]被定义为开区间i、j之间的最优解
+        dp = [[0 for i in range(m)] for j in range(m)]
+
+        # 那么，假设存在k，其左右刚好为i和j（新增的一个气球），那么戳破后的状态转移方程
+        # 更新的方向：从短区间到长区间
+        for length in range(2, m):
+            for i in range(0, m - length):
+                j = i + length
+                for k in range(i + 1, j): # 开区间
+                    
+                    dp[i][j] = max(dp[i][j], 
+                                   dp[i][k] + dp[k][j] + vals[i] * vals[k] * vals[j])
+
+        return dp[0][m - 1]
+
