@@ -125,10 +125,33 @@ class Solution:
             if square == x:
                 return mid
             elif square < x:
-                left_index = mid + 1# ERROR：边界条件错误，忘记加一
+                left_index = mid + 1 # ERROR：边界条件错误，忘记加一
             else:
-                right_index = mid + 1# ERROR：边界条件错误，忘记加一
+                right_index = mid + 1 # ERROR：边界条件错误，忘记加一
     
         return right_index
 
 
+class Solution:
+    def mySqrt(self, x: int) -> int:
+
+        if x == 0:
+            return 0
+        if x == 1:
+            return 1
+        
+        left_index = 0
+        right_index = x
+
+        while left_index < right_index:
+            mid = ( left_index + right_index ) // 2
+            square = mid * mid
+
+            if square == x:
+                return mid
+            elif square < x:
+                left_index = mid + 1
+            else:
+                right_index = mid - 1
+        
+        return left_index

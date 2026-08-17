@@ -144,3 +144,66 @@ if __name__ == "__main__":
 
 
 
+# ===================================================
+
+# 主要问题：重要问题
+# 推导中如何理解Smin
+import sys
+
+def solve(N, K, M, R):
+
+    if (N - K * R) % M != 0: # 问题：不可除零，且要求S计算结果为整数
+        return (-1, None)
+    
+    S = (N - K * R) // M # 问题二，浮点数除法
+    if S < 0: # 问题三，边界条件，S = 0存在合法解
+        return (-1, None)
+
+    if R == 0:
+        Smin = K * (K + 1) // 2 # 问题二，浮点数除法
+        start_idx = 1
+    else:
+        Smin = K * (K - 1) // 2
+        start_idx = 0
+
+    delta = S - Smin
+
+    if delta < 0:
+        return (-1, None)
+
+    
+    # 此时成立，则以最小值进行构筑
+    ans = []
+    for i in range(start_idx, start_idx + K - 1): # 问题四，这里因为忘记start_idx会压缩区间了，R = 0时会缺答案
+        ans.append(i * M + R)
+
+    ans.append((start_idx + K - 1 + delta) * M + R) # 问题五，上面忘记改，这里跟着一起错了
+
+    return (1, ans)
+
+
+def main():
+
+
+    all_datas = sys.stdin.read().split()
+    ptr = 0 
+
+
+    T = int(all_datas[ptr])
+    ptr += 1
+
+    for t in range(T): # 问题一，忘记range
+        N, K, M, R = int(all_datas[ptr]), int(all_datas[ptr + 1]), int(all_datas[ptr + 2]), int(all_datas[ptr + 3]) # 问题五,忘记了指针的写法, 以后干脆用迭代器吧
+        ptr += 4
+
+        ans_tuple = solve(N, K, M, R)
+        if ans_tuple[0] == -1:
+            sys.stdout.write("NO\n") 
+        else:
+            sys.stdout.write("YES\n") 
+            ans = ans_tuple[1]
+            print(" ".join([str(item) for item in ans]), end = "\n" if not t == T - 1 else "") # 问题六,最后一行总是会默认换行,该如何解决
+
+
+if __name__ == "__main__":
+    main()

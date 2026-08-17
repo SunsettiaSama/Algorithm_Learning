@@ -96,3 +96,14 @@ def main():
 if __name__ == "__main__":
     main()
 
+# ================================================================
+
+def solve_case(a: list):
+
+    stack = []
+    ans = 0
+
+    for ak in a:
+
+        # 检查
+

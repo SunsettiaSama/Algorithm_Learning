@@ -53,3 +53,91 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+# =====================================================
+
+# 求取max(资源点的数量)
+
+class Points:
+    def __init__(self):
+
+        self.p1 = 0
+        self.p2 = 0
+        self.p3 = 0
+        self.p4 = 0
+
+        return 
+
+    def add(self, x, y):
+
+        if x > 0 and y > 0:
+            self.p1 += 1
+
+        elif x < 0 and y > 0:
+            self.p2 += 1
+
+        elif x < 0 and y < 0:
+            self.p3 += 1
+
+        elif x > 0 and y < 0:
+            self.p4 += 1
+
+        # 然后考虑坐标轴上的点
+        if x == 0:
+            if y > 0:
+                self.p1 += 1
+                self.p4 += 1
+            elif y < 0:
+                self.p2 += 1
+                self.p3 += 1
+
+        if y == 0:
+            if x > 0:
+                self.p1 += 1
+                self.p2 += 1
+            elif x < 0:
+                self.p3 += 1
+                self.p4 += 1
+
+        if x == 0 and y == 0:
+            self.p1 += 1
+            self.p2 += 1
+            self.p3 += 1
+            self.p4 += 1
+
+    def max(self):
+        return max(self.p1, self.p2, self.p3, self.p4)
+
+
+def get_data():
+    import sys
+
+    all_datas = sys.stdin.read().split()
+    ptr = 0
+
+    T = int(all_datas[ptr])
+    ptr += 1
+
+    for t in range(T):
+        n = int(all_datas[ptr])
+        ptr += 1
+
+        points = Points()
+        for _ in range(n):
+            x, y = int(all_datas[ptr]), int(all_datas[ptr + 1])
+            ptr += 2
+
+            points.add(x, y)
+
+        print(points.max())
+
+    return 
+
+
+if __name__ == "__main__":
+    main()
+

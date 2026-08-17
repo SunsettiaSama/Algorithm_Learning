@@ -42,3 +42,23 @@ class Solution:
                 else:
                     dp[j] = 0
         return max_len
+    
+
+from typing import List
+class Solution:
+    def findLength(self, A: List[int], B: List[int]) -> int:
+        m, n = len(A), len(B)
+
+        dp = [0] * (n+1)
+        max_len = 0
+
+        for i in range(1, m + 1):
+            for j in range(n, 0, -1):
+
+                if A[i - 1] == B[j - 1]:
+                    dp[j] = dp[j - 1] + 1
+                    max_len = max(max_len, dp[j])
+                else:
+                    dp[j] = 0
+        
+        return max_len

@@ -52,3 +52,32 @@ class Solution:
 
         return max(dp)
 
+
+
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
+
+        # 定义dp：最长严格递增子序列的长度
+        dp = [1 for i in range(len(nums))]
+
+        for num_index in range(len(nums)):
+            for update_index in range(num_index):
+                if nums[num_index] > nums[update_index]:
+                    dp[num_index] = max(dp[num_index], dp[update_index ] + 1)
+        
+        return dp[-1]
+    
+
+class Solution:
+    def lengthOfLIS(self, nums: List[int]) -> int:
+
+        # 定义dp：最长严格递增子序列的长度
+        dp = [1 for i in range(len(nums))]
+
+        for num_index in range(1, len(nums)):
+            for update_index in range(num_index):
+                
+                # 对于第i个值，其状态转移方程为dp[i] = max(dp[j] + 1, dp[i])
+                if nums[num_index] > nums[update_index]:
+                    dp[num_index] = max(dp[num_index], dp[update_index] + 1)
+                

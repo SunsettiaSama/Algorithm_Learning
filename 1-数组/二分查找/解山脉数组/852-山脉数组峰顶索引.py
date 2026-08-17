@@ -101,3 +101,32 @@ class Solution:
                 right = mid
 
         return left
+
+
+# ====================单个山脉===================
+
+from typing import List
+
+class Solution:
+    def peakIndexInMountainArray(self, arr: List[int]) -> int:
+
+
+        n = len(arr)
+
+        # 单个山峰，二分查找
+
+        left = 0
+        right = n - 1
+
+        while left < right:
+
+            mid = (left + right) // 2
+
+            if arr[mid] < arr[mid + 1]:
+                left = mid + 1
+            else:
+                right = mid # 问题：为什么这里不需要动作
+
+        return left
+
+
